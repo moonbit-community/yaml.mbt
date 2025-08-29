@@ -1,0 +1,258 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "myfreess/yaml"
+
+// Values
+const AMPERSAND : Int = 0x26
+
+const ASTERISK : Int = 0x2a
+
+const BACKSLASH : Int = 0x5c
+
+const BOM : Int = 0xfeff
+
+const CARRIAGE_RETURN : Int = 0x0d
+
+const COLON : Int = 0x3a
+
+const COMMA : Int = 0x2c
+
+const COMMERCIAL_AT : Int = 0x40
+
+const DOT : Int = 0x2e
+
+const DOUBLE_QUOTE : Int = 0x22
+
+const EXCLAMATION : Int = 0x21
+
+const GRAVE_ACCENT : Int = 0x60
+
+const GREATER_THAN : Int = 0x3e
+
+const LEFT_CURLY_BRACKET : Int = 0x7b
+
+const LEFT_SQUARE_BRACKET : Int = 0x5b
+
+const LINE_FEED : Int = 0x0a
+
+const MINUS : Int = 0x2d
+
+const PERCENT : Int = 0x25
+
+const PLUS : Int = 0x2b
+
+const QUESTION : Int = 0x3f
+
+const RIGHT_CURLY_BRACKET : Int = 0x7d
+
+const RIGHT_SQUARE_BRACKET : Int = 0x5d
+
+const SHARP : Int = 0x23
+
+const SINGLE_QUOTE : Int = 0x27
+
+const SMALLER_THAN : Int = 0x3c
+
+const SPACE : Int = 0x20
+
+const TAB : Int = 0x09
+
+const VERTICAL_LINE : Int = 0x7c
+
+fn bool_type() -> YamlType[Bool]
+
+fn clone_yaml_value(YamlValue) -> YamlValue
+
+fn codepoint_to_string(Int) -> String
+
+fn core_schema() -> Schema
+
+fn decimal_char_to_number(Int) -> Int
+
+fn default_schema() -> Schema
+
+fn extended_schema() -> Schema
+
+fn failsafe_schema() -> Schema
+
+fn float_type() -> YamlType[Double]
+
+fn get_schema(String) -> Schema
+
+fn hex_char_to_number(Int) -> Int
+
+fn int_type() -> YamlType[Int]
+
+fn is_decimal_digit(Int) -> Bool
+
+fn is_eol(Int) -> Bool
+
+fn is_flow_indicator(Int) -> Bool
+
+fn is_hex_digit(Int) -> Bool
+
+fn is_negative_zero(Double) -> Bool
+
+fn is_object(YamlValue) -> Bool
+
+fn is_plain_object(YamlValue) -> Bool
+
+fn is_printable(Int) -> Bool
+
+fn is_whitespace_or_eol(Int) -> Bool
+
+fn json_schema() -> Schema
+
+fn map_type() -> YamlType[Map[String, YamlValue]]
+
+fn null_type() -> YamlType[Unit]
+
+fn parse(String, options? : ParseOptions) -> YamlValue raise YamlParseError
+
+fn resolve_scalar(String, Schema) -> YamlValue
+
+fn seq_type() -> YamlType[Array[YamlValue]]
+
+fn str_type() -> YamlType[String]
+
+fn stringify(YamlValue, options? : StringifyOptions) -> String
+
+fn yaml_array(Array[YamlValue]) -> YamlValue
+
+fn yaml_object(Array[(String, YamlValue)]) -> YamlValue
+
+fn yaml_value_is_null(YamlValue) -> Bool
+
+fn yaml_value_to_array(YamlValue) -> Array[YamlValue]?
+
+fn yaml_value_to_bool(YamlValue) -> Bool?
+
+fn yaml_value_to_debug_string(YamlValue) -> String
+
+fn yaml_value_to_double(YamlValue) -> Double?
+
+fn yaml_value_to_int(YamlValue) -> Int?
+
+fn yaml_value_to_object(YamlValue) -> Map[String, YamlValue]?
+
+fn yaml_value_to_string(YamlValue) -> String?
+
+// Errors
+type YamlParseError
+
+// Types and methods
+type DumperState
+
+pub enum KindType {
+  Sequence
+  Scalar
+  Mapping
+}
+impl Eq for KindType
+impl Show for KindType
+
+pub struct ParseOptions {
+  schema : String
+  allow_duplicate_keys : Bool
+  on_warning : ((YamlError) -> Unit)?
+}
+fn ParseOptions::default() -> Self
+fn ParseOptions::new() -> Self
+
+type ParserState
+
+pub struct Position {
+  line : Int
+  column : Int
+  index : Int
+}
+impl Eq for Position
+impl Show for Position
+
+pub struct Schema {
+  implicit_types : Array[YamlType[YamlValue]]
+  explicit_types : Array[YamlType[YamlValue]]
+  type_map : TypeMap
+}
+
+pub enum SchemaType {
+  FailSafe
+  Json
+  Core
+  Default
+  Extended
+}
+impl Eq for SchemaType
+impl Show for SchemaType
+
+pub struct StringifyOptions {
+  indent : Int
+  array_indent : Bool
+  skip_invalid : Bool
+  flow_level : Int
+  styles : Map[String, StyleVariant]
+  schema : String
+  sort_keys : Bool
+  line_width : Int
+  use_anchors : Bool
+  compat_mode : Bool
+  condense_flow : Bool
+}
+fn StringifyOptions::default() -> Self
+impl Show for StringifyOptions
+
+pub enum StyleVariant {
+  Lowercase
+  Uppercase
+  Camelcase
+  Decimal
+  Binary
+  Octal
+  Hexadecimal
+}
+impl Eq for StyleVariant
+impl Show for StyleVariant
+
+pub struct TypeMap {
+  fallback : Map[String, YamlType[YamlValue]]
+  mapping : Map[String, YamlType[YamlValue]]
+  scalar : Map[String, YamlType[YamlValue]]
+  sequence : Map[String, YamlType[YamlValue]]
+}
+
+pub enum YamlError {
+  ParseError(String, Int, Int)
+  TypeError(String)
+  SyntaxError(String)
+  ResolveError(String)
+  ConstructError(String)
+}
+impl Eq for YamlError
+impl Show for YamlError
+
+pub struct YamlType[T] {
+  tag : String
+  kind : KindType
+  predicate : (YamlValue) -> Bool
+  represent : ((T, StyleVariant?) -> String)?
+  default_style : StyleVariant?
+  resolve : (YamlValue) -> Bool
+  construct : (YamlValue) -> T
+}
+
+pub enum YamlValue {
+  Null
+  Bool(Bool)
+  Int(Int)
+  Float(Double)
+  String(String)
+  Array(Array[YamlValue])
+  Object(Map[String, YamlValue])
+}
+impl Eq for YamlValue
+impl Show for YamlValue
+
+// Type aliases
+pub typealias (T, StyleVariant?) -> String as RepresentFn[T]
+
+// Traits
+

@@ -96,6 +96,12 @@ fn is_eol_internal(c : Int) -> Bool {
 }
 
 ///|
+/// Check if character is end-of-line
+pub fn is_eol(c : Int) -> Bool {
+  is_eol_internal(c)
+}
+
+///|
 /// Check if character is whitespace (internal)
 fn is_whitespace_internal(c : Int) -> Bool {
   c == TAB || c == SPACE
@@ -175,11 +181,11 @@ pub fn decimal_char_to_number(c : Int) -> Int {
 pub fn codepoint_to_string(codepoint : Int) -> String {
   if codepoint <= 0xFFFF {
     // Basic Multilingual Plane
-    Char::from_int(codepoint).to_string()
+    codepoint.unsafe_to_char().to_string()
   } else {
     // Surrogate pairs for code points beyond BMP
     let high = (codepoint - 0x010000) / 1024 + 0xD800
     let low = (codepoint - 0x010000) % 1024 + 0xDC00
-    Char::from_int(high).to_string() + Char::from_int(low).to_string()
+    high.unsafe_to_char().to_string() + low.unsafe_to_char().to_string()
   }
 }

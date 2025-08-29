@@ -4,11 +4,11 @@
 
 // Parser state
 struct ParserState {
-  mut input : String
+  input : String
   mut position : Int
   mut line : Int
   mut column : Int
-  mut length : Int
+  length : Int
   options : ParseOptions
 }
 
@@ -30,7 +30,7 @@ fn ParserState::current_char(self : ParserState) -> Int {
   if self.position >= self.length {
     0
   } else {
-    self.input[self.position].to_int()
+    self.input[self.position]
   }
 }
 
@@ -40,7 +40,7 @@ fn ParserState::peek_char(self : ParserState, offset : Int) -> Int {
   if pos >= self.length {
     0
   } else {
-    self.input[pos].to_int()
+    self.input[pos]
   }
 }
 
@@ -74,12 +74,12 @@ fn ParserState::read_until(
   while self.position < self.length && predicate(self.current_char()) {
     self.advance()
   }
-  self.input.substring(start, self.position)
+  self.input.substring(start~, end=self.position)
 }
 
 ///|
-fn ParserState::error(self : ParserState, message : String) -> YamlError {
-  YamlError::ParseError(message, self.line, self.column)
+fn ParserState::error(self : ParserState, message : String) -> YamlParseError {
+  YamlParseError(YamlError::ParseError(message, self.line, self.column))
 }
 
 ///|
@@ -88,13 +88,13 @@ fn sanitize_input(input : String) -> String {
   let mut result = input
 
   // Add trailing newline if not exists
-  if result.length() > 0 && !is_eol(result[result.length() - 1].to_int()) {
+  if result.length() > 0 && !is_eol(result[result.length() - 1]) {
     result = result + "\n"
   }
 
   // Strip BOM
-  if result.length() > 0 && result[0].to_int() == BOM {
-    result = result.substring(1)
+  if result.length() > 0 && result[0] == BOM {
+    result = result.substring(start=1)
   }
 
   // Add string terminator
@@ -103,7 +103,7 @@ fn sanitize_input(input : String) -> String {
 
 ///|
 /// Parse a scalar value
-fn parse_scalar(state : ParserState) -> YamlValue! {
+fn parse_scalar(state : ParserState) -> YamlValue raise YamlParseError {
   state.skip_whitespace()
   if state.current_char() == 0 {
     return YamlValue::Null
@@ -112,17 +112,19 @@ fn parse_scalar(state : ParserState) -> YamlValue! {
 
   // String literals
   if ch == DOUBLE_QUOTE {
-    parse_double_quoted_string(state)!
+    parse_double_quoted_string(state)
   } else if ch == SINGLE_QUOTE {
-    parse_single_quoted_string(state)!
+    parse_single_quoted_string(state)
   } else {
-    parse_plain_scalar(state)!
+    parse_plain_scalar(state)
   }
 }
 
 ///|
 /// Parse double-quoted string
-fn parse_double_quoted_string(state : ParserState) -> YamlValue! {
+fn parse_double_quoted_string(
+  state : ParserState,
+) -> YamlValue raise YamlParseError {
   state.advance() // Skip opening quote
   let mut result = ""
   while state.current_char() != DOUBLE_QUOTE && state.current_char() != 0 {
@@ -131,10 +133,10 @@ fn parse_double_quoted_string(state : ParserState) -> YamlValue! {
       state.advance()
       let escaped = state.current_char()
       match escaped {
-        0x22 /* " */ => result += "\""
-        0x5c /* \ */ => result += "\\"
-        0x0a /* \n */ => result += "\n"
-        0x09 /* \t */ => result += "\t"
+        0x22 => result += "\"" // " 
+        0x5c => result += "\\" // \
+        0x0a => result += "\n" // \n
+        0x09 => result += "\t" // \t
         _ => {
           result += "\\"
           result += Char::from_int(escaped).to_string()
@@ -155,7 +157,9 @@ fn parse_double_quoted_string(state : ParserState) -> YamlValue! {
 
 ///|
 /// Parse single-quoted string
-fn parse_single_quoted_string(state : ParserState) -> YamlValue raise {
+fn parse_single_quoted_string(
+  state : ParserState,
+) -> YamlValue raise YamlParseError {
   state.advance() // Skip opening quote
   let mut result = ""
   while state.current_char() != SINGLE_QUOTE && state.current_char() != 0 {
@@ -180,7 +184,7 @@ fn parse_single_quoted_string(state : ParserState) -> YamlValue raise {
 
 ///|
 /// Parse plain scalar (unquoted)
-fn parse_plain_scalar(state : ParserState) -> YamlValue raise {
+fn parse_plain_scalar(state : ParserState) -> YamlValue {
   let text = state.read_until(fn(ch) {
     !is_whitespace_or_eol(ch) &&
     !is_flow_indicator(ch) &&
@@ -208,42 +212,113 @@ fn parse_plain_scalar(state : ParserState) -> YamlValue raise {
 ///|
 /// Try to parse a string as a number
 fn parse_number(text : String) -> YamlValue? {
-  // Try integer first
-  try {
-    let i = text.to_int()
+  // Simple number parsing - this is a basic implementation
+  // Try integer first - simple check for digits only
+  if is_all_digits(text) {
+    let i = parse_int_simple(text)
     Some(YamlValue::Int(i))
-  } catch {
-    _ =>
-      // Try float
-      try {
-        let f = text.to_double()
-        Some(YamlValue::Float(f))
-      } catch {
-        _ => None
-      }
+  } else if contains_dot(text) {
+    // Try to parse as float
+    let f = parse_double_simple(text)
+    Some(YamlValue::Float(f))
+  } else {
+    None
   }
 }
 
 ///|
+/// Check if string contains only digits (and optional minus sign)
+fn is_all_digits(text : String) -> Bool {
+  if text.length() == 0 {
+    return false
+  }
+  let start = if text[0] == 45 { 1 } else { 0 } // 45 is '-'
+  if start >= text.length() {
+    return false
+  }
+  for i = start; i < text.length(); i = i + 1 {
+    let ch = text[i]
+    if ch < 48 || ch > 57 { // 48-57 are '0'-'9'
+      return false
+    }
+  }
+  true
+}
+
+///|
+/// Check if string contains a dot
+fn contains_dot(text : String) -> Bool {
+  for i = 0; i < text.length(); i = i + 1 {
+    if text[i] == 46 { // 46 is '.'
+      return true
+    }
+  }
+  false
+}
+
+///|
+/// Simple integer parsing
+fn parse_int_simple(text : String) -> Int {
+  let mut result = 0
+  let mut negative = false
+  let start = if text[0] == 45 { // 45 is '-'
+    negative = true
+    1
+  } else {
+    0
+  }
+  for i = start; i < text.length(); i = i + 1 {
+    let digit = text[i] - 48 // Convert '0'-'9' to 0-9
+    result = result * 10 + digit
+  }
+  if negative {
+    -result
+  } else {
+    result
+  }
+}
+
+///|
+/// Simple double parsing - basic implementation
+fn parse_double_simple(text : String) -> Double {
+  // Very basic implementation - just convert to Int and then to Double for now
+  // A full implementation would handle decimal points properly
+  let parts = text.split(".")
+  if parts.length() == 2 {
+    let int_part = parse_int_simple(parts[0])
+    let frac_part = parse_int_simple(parts[1])
+    let divisor = power_of_10(parts[1].length())
+    int_part.to_double() + frac_part.to_double() / divisor.to_double()
+  } else {
+    parse_int_simple(text).to_double()
+  }
+}
+
+///|
+/// Calculate 10^n
+fn power_of_10(n : Int) -> Int {
+  let mut result = 1
+  for i = 0; i < n; i = i + 1 {
+    result = result * 10
+  }
+  result
+}
+
+///|
 /// Parse array (sequence)
-fn parse_array(state : ParserState) -> YamlValue! {
+fn parse_array(state : ParserState) -> YamlValue raise YamlParseError {
   state.advance() // Skip '['
   state.skip_whitespace()
-  
   let result = []
-  
   if state.current_char() == RIGHT_SQUARE_BRACKET {
     state.advance()
     return YamlValue::Array(result)
   }
-  
   while true {
-    let value = parse_value(state)!
+    let value = parse_value(state)
     result.push(value)
-    
     state.skip_whitespace()
     let ch = state.current_char()
-    
     if ch == RIGHT_SQUARE_BRACKET {
       state.advance()
       break
@@ -256,49 +331,41 @@ fn parse_array(state : ParserState) -> YamlValue! {
       raise state.error("Expected ',' or ']' in array")
     }
   }
-  
   YamlValue::Array(result)
 }
 
 ///|
 /// Parse object (mapping)
-fn parse_object(state : ParserState) -> YamlValue! {
+fn parse_object(state : ParserState) -> YamlValue raise YamlParseError {
   state.advance() // Skip '{'
   state.skip_whitespace()
-  
   let result = Map::new()
-  
   if state.current_char() == RIGHT_CURLY_BRACKET {
     state.advance()
     return YamlValue::Object(result)
   }
-  
   while true {
     // Parse key
-    let key_value = parse_value(state)!
+    let key_value = parse_value(state)
     let key = match key_value {
       String(s) => s
       _ => raise state.error("Object key must be a string")
     }
-    
     state.skip_whitespace()
     if state.current_char() != COLON {
       raise state.error("Expected ':' after object key")
     }
     state.advance() // Skip ':'
     state.skip_whitespace()
-    
+
     // Parse value
-    let value = parse_value(state)!
-    
+    let value = parse_value(state)
     if !state.options.allow_duplicate_keys && result.contains(key) {
       raise state.error("Duplicate key: \{key}")
     }
     result.set(key, value)
-    
     state.skip_whitespace()
     let ch = state.current_char()
-    
     if ch == RIGHT_CURLY_BRACKET {
       state.advance()
       break
@@ -311,45 +378,46 @@ fn parse_object(state : ParserState) -> YamlValue! {
       raise state.error("Expected ',' or '}' in object")
     }
   }
-  
   YamlValue::Object(result)
 }
 
 ///|
 /// Parse any YAML value
-fn parse_value(state : ParserState) -> YamlValue! {
+fn parse_value(state : ParserState) -> YamlValue raise YamlParseError {
   state.skip_whitespace()
-  
   let ch = state.current_char()
-  
   if ch == 0 {
     YamlValue::Null
   } else if ch == LEFT_SQUARE_BRACKET {
-    parse_array(state)!
+    parse_array(state)
   } else if ch == LEFT_CURLY_BRACKET {
-    parse_object(state)!
+    parse_object(state)
   } else {
-    parse_scalar(state)!
+    parse_scalar(state)
   }
 }
 
 ///|
 /// Parse a YAML string and return the parsed value
-pub fn parse(content : String, options~ : ParseOptions = ParseOptions::new()) -> YamlValue! {
+pub fn parse(
+  content : String,
+  options? : ParseOptions = ParseOptions::new(),
+) -> YamlValue raise YamlParseError {
   let state = ParserState::new(content, options)
-  let result = parse_value(state)!
-  
+  let result = parse_value(state)
+
   // Skip any remaining whitespace
   state.skip_whitespace()
-  
+
   // Check for additional content (multiple documents)
   if state.current_char() != 0 {
-    if state.current_char() == MINUS && 
-       state.peek_char(1) == MINUS && 
-       state.peek_char(2) == MINUS {
-      raise state.error("Found more than 1 document in the stream: expected a single document")
+    if state.current_char() == MINUS &&
+      state.peek_char(1) == MINUS &&
+      state.peek_char(2) == MINUS {
+      raise state.error(
+        "Found more than 1 document in the stream: expected a single document",
+      )
     }
   }
-  
   result
 }

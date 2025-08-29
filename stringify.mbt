@@ -2,30 +2,15 @@
 /// YAML Stringify implementation
 /// Simplified version based on js-yaml v3.13.1
 
-// Stringify options
-pub struct StringifyOptions {
-  pub indent : Int
-  pub array_indent : Bool
-  pub skip_invalid : Bool
-  pub flow_level : Int
-  pub styles : Map[String, StyleVariant]
-  pub schema : SchemaType
-  pub sort_keys : Bool
-  pub line_width : Int
-  pub use_anchors : Bool
-  pub compat_mode : Bool
-  pub condense_flow : Bool
-} derive(Show, Debug)
-
 ///|
-impl StringifyOptions with new() -> StringifyOptions {
+fn StringifyOptions::new() -> StringifyOptions {
   {
     indent: 2,
     array_indent: true,
     skip_invalid: false,
     flow_level: -1,
     styles: Map::new(),
-    schema: SchemaType::Default,
+    schema: "default",
     sort_keys: false,
     line_width: 80,
     use_anchors: true,
@@ -44,41 +29,45 @@ struct DumperState {
 }
 
 ///|
-impl DumperState with new(options : StringifyOptions) -> DumperState {
+fn DumperState::new(options : StringifyOptions) -> DumperState {
   { options, indent_level: 0, output: "" }
 }
 
 ///|
-impl DumperState with write(self, text : String) -> Unit {
-  self.output += text
+fn DumperState::write(self : DumperState, text : String) -> Unit {
+  self.output = self.output + text
 }
 
 ///|
-impl DumperState with write_line(self, text : String) -> Unit {
-  self.output += text + "\n"
+fn DumperState::write_line(self : DumperState, text : String) -> Unit {
+  self.output = self.output + text + "\n"
 }
 
 ///|
-impl DumperState with write_indent(self) -> Unit {
+fn DumperState::write_indent(self : DumperState) -> Unit {
   for i = 0; i < self.indent_level * self.options.indent; i = i + 1 {
-    self.output += " "
+    self.output = self.output + " "
   }
 }
 
 ///|
-impl DumperState with increase_indent(self) -> Unit {
-  self.indent_level += 1
+fn DumperState::increase_indent(self : DumperState) -> Unit {
+  self.indent_level = self.indent_level + 1
 }
 
 ///|
-impl DumperState with decrease_indent(self) -> Unit {
+fn DumperState::decrease_indent(self : DumperState) -> Unit {
   if self.indent_level > 0 {
-    self.indent_level -= 1
+    self.indent_level = self.indent_level - 1
   }
 }
 
 ///|
-impl DumperState with write_scalar(self, value : String, needs_quotes : Bool) -> Unit {
+fn DumperState::write_scalar(
+  self : DumperState,
+  value : String,
+  needs_quotes : Bool,
+) -> Unit {
   if needs_quotes {
     self.write_quoted_string(value)
   } else {
@@ -87,7 +76,7 @@ impl DumperState with write_scalar(self, value : String, needs_quotes : Bool) ->
 }
 
 ///|
-impl DumperState with write_quoted_string(self, value : String) -> Unit {
+fn DumperState::write_quoted_string(self : DumperState, value : String) -> Unit {
   self.write("\"")
   for i = 0; i < value.length(); i = i + 1 {
     let ch = value[i]
@@ -104,7 +93,7 @@ impl DumperState with write_quoted_string(self, value : String) -> Unit {
 }
 
 ///|
-impl DumperState with needs_quotes(self, value : String) -> Bool {
+fn DumperState::needs_quotes(self : DumperState, value : String) -> Bool {
   if value.is_empty() {
     return true
   }
@@ -139,7 +128,11 @@ impl DumperState with needs_quotes(self, value : String) -> Bool {
 }
 
 ///|
-impl DumperState with write_yaml_value(self, value : YamlValue, in_flow : Bool) -> Unit {
+fn DumperState::write_yaml_value(
+  self : DumperState,
+  value : YamlValue,
+  in_flow : Bool,
+) -> Unit {
   match value {
     Null => self.write("null")
     Bool(b) => self.write(if b { "true" } else { "false" })
@@ -152,7 +145,11 @@ impl DumperState with write_yaml_value(self, value : YamlValue, in_flow : Bool) 
 }
 
 ///|
-impl DumperState with write_array(self, arr : Array[YamlValue], in_flow : Bool) -> Unit {
+fn DumperState::write_array(
+  self : DumperState,
+  arr : Array[YamlValue],
+  in_flow : Bool,
+) -> Unit {
   if arr.is_empty() {
     self.write("[]")
     return
@@ -194,8 +191,8 @@ impl DumperState with write_array(self, arr : Array[YamlValue], in_flow : Bool) 
 }
 
 ///|
-impl DumperState with write_object(
-  self,
+fn DumperState::write_object(
+  self : DumperState,
   obj : Map[String, YamlValue],
   in_flow : Bool,
 ) -> Unit {
@@ -266,7 +263,7 @@ impl DumperState with write_object(
 }
 
 ///|
-impl DumperState with dump(self, value : YamlValue) -> String {
+fn DumperState::dump(self : DumperState, value : YamlValue) -> String {
   self.write_yaml_value(value, false)
   self.output
 }

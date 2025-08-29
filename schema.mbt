@@ -12,7 +12,7 @@ pub enum SchemaType {
   Core // Same as Json
   Default // Core + binary, omap, pairs, set
   Extended // Default + regexp, undefined
-} derive(Eq, Show, Debug)
+} derive(Eq, Show)
 
 ///|
 /// Type map for organizing types by kind
@@ -21,7 +21,7 @@ pub struct TypeMap {
   pub mapping : Map[String, YamlType[YamlValue]]
   pub scalar : Map[String, YamlType[YamlValue]]
   pub sequence : Map[String, YamlType[YamlValue]]
-} derive(Show, Debug)
+}
 
 ///|
 /// YAML Schema containing implicit and explicit types
@@ -29,7 +29,7 @@ pub struct Schema {
   pub implicit_types : Array[YamlType[YamlValue]] // Types resolved implicitly
   pub explicit_types : Array[YamlType[YamlValue]] // Types requiring explicit tags  
   pub type_map : TypeMap
-} derive(Show, Debug)
+}
 
 ///|
 /// Create a type map from implicit and explicit types
@@ -69,8 +69,8 @@ fn create_schema(
   explicit_types? : Array[YamlType[YamlValue]] = [],
   include? : Schema? = None,
 ) -> Schema {
-  let mut all_implicit = []
-  let mut all_explicit = []
+  let all_implicit = []
+  let all_explicit = []
 
   // Include parent schema types if provided
   match include {
@@ -409,8 +409,8 @@ pub fn get_schema(name : String) -> Schema {
 pub fn resolve_scalar(data : String, schema : Schema) -> YamlValue {
   // Try implicit types first
   for yaml_type in schema.implicit_types {
-    if yaml_type.resolve(String(data)) {
-      return yaml_type.construct(String(data))
+    if (yaml_type.resolve)(String(data)) {
+      return (yaml_type.construct)(String(data))
     }
   }
 

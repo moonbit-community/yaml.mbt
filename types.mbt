@@ -10,7 +10,7 @@ pub enum KindType {
   Sequence // Array-like structures  
   Scalar // Primitive values
   Mapping // Object-like structures
-} derive(Eq, Show, Debug)
+} derive(Eq, Show)
 
 ///|
 /// Style variations for stringify
@@ -22,23 +22,11 @@ pub enum StyleVariant {
   Binary
   Octal
   Hexadecimal
-} derive(Eq, Show, Debug)
+} derive(Eq, Show)
 
 ///|
 /// Type alias for represent function
 pub typealias (T, StyleVariant?) -> String as RepresentFn[T]
-
-///|
-/// Represents any YAML value during parsing
-pub enum YamlValue {
-  Null
-  Bool(Bool)
-  Int(Int)
-  Float(Double)
-  String(String)
-  Array(Array[YamlValue])
-  Object(Map[String, YamlValue])
-} derive(Eq, Show, Debug)
 
 ///|
 /// YAML type definition structure
@@ -51,7 +39,7 @@ pub struct YamlType[T] {
   pub default_style : StyleVariant? // Default serialization style
   pub resolve : (YamlValue) -> Bool // Check if value can be resolved to this type
   pub construct : (YamlValue) -> T // Construct value from YAML
-} derive(Show, Debug)
+}
 
 ///|
 /// Error types for YAML processing
@@ -61,19 +49,11 @@ pub enum YamlError {
   SyntaxError(String)
   ResolveError(String) // For type resolution errors
   ConstructError(String) // For value construction errors
-} derive(Eq, Show, Debug)
+} derive(Eq, Show)
 
 ///|
-impl Show for YamlError with output(self, logger) {
-  match self {
-    ParseError(msg, line, col) =>
-      logger.write_string("Parse error at line \{line}, column \{col}: \{msg}")
-    TypeError(msg) => logger.write_string("Type error: \{msg}")
-    SyntaxError(msg) => logger.write_string("Syntax error: \{msg}")
-    ResolveError(msg) => logger.write_string("Resolve error: \{msg}")
-    ConstructError(msg) => logger.write_string("Construct error: \{msg}")
-  }
-}
+/// Suberror type for YAML parsing
+suberror YamlParseError YamlError
 
 ///|
 /// Position tracking in input
@@ -81,7 +61,7 @@ pub struct Position {
   pub line : Int
   pub column : Int
   pub index : Int
-} derive(Eq, Show, Debug)
+} derive(Eq, Show)
 
 ///|
 /// Parse options for YAML parsing
@@ -89,12 +69,18 @@ pub struct ParseOptions {
   pub schema : String // Schema name to use ("default", "json", etc.)
   pub allow_duplicate_keys : Bool // Allow duplicate keys in mappings
   pub on_warning : ((YamlError) -> Unit)? // Warning handler
-} derive(Show, Debug)
+}
 
 ///|
 /// Default parse options
 pub fn ParseOptions::default() -> ParseOptions {
   { schema: "default", allow_duplicate_keys: false, on_warning: None }
+}
+
+///|
+/// Create new parse options (alias for default)
+pub fn ParseOptions::new() -> ParseOptions {
+  ParseOptions::default()
 }
 
 ///|
@@ -111,7 +97,7 @@ pub struct StringifyOptions {
   pub use_anchors : Bool // Use anchors for duplicate objects
   pub compat_mode : Bool // YAML 1.1 compatibility mode
   pub condense_flow : Bool // Condense flow sequences
-} derive(Show, Debug)
+} derive(Show)
 
 ///|
 /// Default stringify options

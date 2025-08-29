@@ -325,7 +325,7 @@ fn resolve_yaml_integer(data : String) -> Bool {
         if c == '_' {
           continue
         }
-        if !is_hex_char(Char::from_int(data[i])) {
+        if !is_hex_char(data[i].unsafe_to_char()) {
           return false
         }
         has_digits = true
@@ -339,7 +339,7 @@ fn resolve_yaml_integer(data : String) -> Bool {
       if c == '_' {
         continue
       }
-      if !is_octal_char(Char::from_int(data[i])) {
+      if !is_octal_char(data[i].unsafe_to_char()) {
         return false
       }
       has_digits = true
@@ -356,7 +356,7 @@ fn resolve_yaml_integer(data : String) -> Bool {
     if c == '_' {
       continue
     }
-    if !is_decimal_char(Char::from_int(data[i])) {
+    if !is_decimal_char(data[i].unsafe_to_char()) {
       return false
     }
     has_digits = true
@@ -498,7 +498,7 @@ fn parse_decimal(s : String) -> Int {
   let mut i = 0
   while i < s.length() {
     let c_code = s[i]
-    let c = Char::from_int(c_code)
+    let c = c_code.unsafe_to_char()
     if is_decimal_char(c) {
       result = result * 10 + (c_code - 0x30)
     } else {
