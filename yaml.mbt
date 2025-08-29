@@ -132,6 +132,8 @@ pub fn yaml_array(values : Array[YamlValue]) -> YamlValue {
 }
 
 // Directly export needed utility functions
+
+///|
 pub fn is_object(value : YamlValue) -> Bool {
   match value {
     Object(_) => true
@@ -139,6 +141,7 @@ pub fn is_object(value : YamlValue) -> Bool {
   }
 }
 
+///|
 pub fn is_plain_object(value : YamlValue) -> Bool {
   match value {
     Object(_) => true
@@ -146,6 +149,7 @@ pub fn is_plain_object(value : YamlValue) -> Bool {
   }
 }
 
+///|
 pub fn is_negative_zero(f : Double) -> Bool {
   f == 0.0 && 1.0 / f < 0.0
 }
@@ -177,12 +181,20 @@ fn String::repeat(self : String, n : Int) -> String {
 ///|
 /// Get minimum of two integers
 fn Int::min(self : Int, other : Int) -> Int {
-  if self < other { self } else { other }
+  if self < other {
+    self
+  } else {
+    other
+  }
 }
 
 ///|
 /// Array slice method
-fn Array::slice[T](self : Array[T], start? : Int = 0, end? : Int = -1) -> Array[T] {
+fn[T] Array::slice(
+  self : Array[T],
+  start? : Int = 0,
+  end? : Int = -1,
+) -> Array[T] {
   let actual_end = if end == -1 { self.length() } else { end }
   let result = []
   for i = start; i < actual_end && i < self.length(); i = i + 1 {
@@ -193,7 +205,7 @@ fn Array::slice[T](self : Array[T], start? : Int = 0, end? : Int = -1) -> Array[
 
 ///|
 /// Option or method
-fn Option::or[T](self : Option[T], default : T) -> T {
+fn[T] Option::or(self : T?, default : T) -> T {
   match self {
     Some(value) => value
     None => default

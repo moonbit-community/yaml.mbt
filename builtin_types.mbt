@@ -677,8 +677,6 @@ fn to_uppercase(s : String) -> String {
   result
 }
 
-
-
 // Character validation helpers
 
 ///|

@@ -408,24 +408,22 @@ fn ParserState::skip_document_separator(self : ParserState) -> Unit {
 
 ///|
 /// Read all documents from the input
-fn ParserState::read_documents(self : ParserState) -> Array[YamlValue] raise YamlParseError {
+fn ParserState::read_documents(
+  self : ParserState,
+) -> Array[YamlValue] raise YamlParseError {
   let documents = []
   self.skip_whitespace()
-  
+
   // Handle initial document separator if present
   self.skip_document_separator()
-  
   while self.current_char() != 0 {
     self.skip_whitespace()
     if self.current_char() == 0 {
       break
     }
-    
     let document = parse_value(self)
     documents.push(document)
-    
     self.skip_whitespace()
-    
     if self.is_at_document_separator() {
       self.skip_document_separator()
     } else if self.current_char() != 0 {
@@ -433,7 +431,6 @@ fn ParserState::read_documents(self : ParserState) -> Array[YamlValue] raise Yam
       break
     }
   }
-  
   documents
 }
 
@@ -444,10 +441,9 @@ pub fn parse(
   options? : ParseOptions = ParseOptions::new(),
 ) -> YamlValue raise YamlParseError {
   let state = ParserState::new(content, options)
-  
+
   // Use read_documents to get all documents
   let documents = state.read_documents()
-  
   if documents.length() == 0 {
     YamlValue::Null
   } else if documents.length() == 1 {

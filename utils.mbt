@@ -33,23 +33,22 @@ pub fn clone_yaml_value(value : YamlValue) -> YamlValue {
 /// Handles BOM, line endings, and ensures proper termination
 pub fn sanitize_input(input : String) -> String {
   let mut result = input
-  
+
   // Convert input to string if it isn't already
   result = result.to_string()
-  
   if result.length() > 0 {
     // Add trailing newline if not exists
     let last_char = result[result.length() - 1]
     if !is_eol(last_char) {
       result = result + "\n"
     }
-    
+
     // Strip BOM (Byte Order Mark)
     if result[0] == BOM {
       result = result.substring(start=1)
     }
   }
-  
+
   // Use 0 as string terminator for easier bounds checking
   result + "\u{0000}"
 }
@@ -98,17 +97,16 @@ pub fn is_document_end(line : String) -> Bool {
 pub fn trim_whitespace(s : String) -> String {
   let mut start = 0
   let mut end = s.length()
-  
+
   // Find first non-whitespace character
   while start < end && is_whitespace_or_eol(s[start]) {
     start += 1
   }
-  
+
   // Find last non-whitespace character
   while end > start && is_whitespace_or_eol(s[end - 1]) {
     end -= 1
   }
-  
   if start >= end {
     ""
   } else {
@@ -149,7 +147,6 @@ pub fn is_empty_line(line : String) -> Bool {
 pub fn split_lines(input : String) -> Array[String] {
   let lines = []
   let mut current = ""
-  
   let mut i = 0
   while i < input.length() {
     let ch = input[i]
@@ -170,12 +167,11 @@ pub fn split_lines(input : String) -> Array[String] {
       i += 1
     }
   }
-  
+
   // Add last line if not empty
   if current.length() > 0 {
     lines.push(current)
   }
-  
   lines
 }
 
@@ -183,7 +179,6 @@ pub fn split_lines(input : String) -> Array[String] {
 /// Escape special characters for YAML output
 pub fn escape_yaml_string(s : String) -> String {
   let mut result = ""
-  
   for i = 0; i < s.length(); i = i + 1 {
     let ch = s[i]
     match ch {
@@ -198,7 +193,7 @@ pub fn escape_yaml_string(s : String) -> String {
       0x0b => result += "\\v" // vertical tab
       0x00 => result += "\\0" // null
       0x1b => result += "\\e" // escape
-      _ => 
+      _ =>
         if ch < 32 || ch == 0x7f {
           // Non-printable ASCII characters
           result += "\\x" + format_hex_byte(ch)
@@ -216,7 +211,6 @@ pub fn escape_yaml_string(s : String) -> String {
         }
     }
   }
-  
   result
 }
 
@@ -224,9 +218,9 @@ pub fn escape_yaml_string(s : String) -> String {
 /// Format byte as 2-digit hex
 fn format_hex_byte(byte : Int) -> String {
   let hex_digits = "0123456789abcdef"
-  let high = (byte / 16) % 16
+  let high = byte / 16 % 16
   let low = byte % 16
-  Char::from_int(hex_digits[high]).to_string() + 
+  Char::from_int(hex_digits[high]).to_string() +
   Char::from_int(hex_digits[low]).to_string()
 }
 
@@ -236,13 +230,11 @@ fn format_hex_unicode(codepoint : Int) -> String {
   let hex_digits = "0123456789abcdef"
   let mut result = ""
   let mut val = codepoint
-  
   for i = 0; i < 8; i = i + 1 {
     let digit = val % 16
     result = Char::from_int(hex_digits[digit]).to_string() + result
     val /= 16
   }
-  
   result
 }
 
@@ -252,13 +244,11 @@ fn format_hex_unicode_short(codepoint : Int) -> String {
   let hex_digits = "0123456789abcdef"
   let mut result = ""
   let mut val = codepoint
-  
   for i = 0; i < 4; i = i + 1 {
     let digit = val % 16
     result = Char::from_int(hex_digits[digit]).to_string() + result
     val /= 16
   }
-  
   result
 }
 
@@ -267,7 +257,6 @@ fn format_hex_unicode_short(codepoint : Int) -> String {
 pub fn unescape_yaml_string(s : String) -> String {
   let mut result = ""
   let mut i = 0
-  
   while i < s.length() {
     let ch = s[i]
     if ch == BACKSLASH && i + 1 < s.length() {
@@ -317,7 +306,7 @@ pub fn unescape_yaml_string(s : String) -> String {
           result += "\u{1b}"
           i += 2
         }
-        0x78 => { // \x (hex escape)
+        0x78 => // \x (hex escape)
           if i + 3 < s.length() {
             let hex_str = s.substring(start=i + 2, end=i + 4)
             match parse_hex_byte(hex_str) {
@@ -334,8 +323,7 @@ pub fn unescape_yaml_string(s : String) -> String {
             result += Char::from_int(ch).to_string()
             i += 1
           }
-        }
-        0x75 => { // \u (unicode escape)
+        0x75 => // \u (unicode escape)
           if i + 5 < s.length() {
             let hex_str = s.substring(start=i + 2, end=i + 6)
             match parse_hex_unicode(hex_str) {
@@ -352,8 +340,7 @@ pub fn unescape_yaml_string(s : String) -> String {
             result += Char::from_int(ch).to_string()
             i += 1
           }
-        }
-        0x55 => { // \U (long unicode escape)
+        0x55 => // \U (long unicode escape)
           if i + 9 < s.length() {
             let hex_str = s.substring(start=i + 2, end=i + 10)
             match parse_hex_unicode(hex_str) {
@@ -370,7 +357,6 @@ pub fn unescape_yaml_string(s : String) -> String {
             result += Char::from_int(ch).to_string()
             i += 1
           }
-        }
         _ => {
           result += Char::from_int(ch).to_string()
           i += 1
@@ -381,7 +367,6 @@ pub fn unescape_yaml_string(s : String) -> String {
       i += 1
     }
   }
-  
   result
 }
 
@@ -391,7 +376,6 @@ fn parse_hex_byte(hex_str : String) -> Int? {
   if hex_str.length() != 2 {
     return None
   }
-  
   let mut result = 0
   for i = 0; i < hex_str.length(); i = i + 1 {
     let ch = hex_str[i]
@@ -406,7 +390,6 @@ fn parse_hex_byte(hex_str : String) -> Int? {
     }
     result = result * 16 + digit
   }
-  
   Some(result)
 }
 
@@ -416,7 +399,6 @@ fn parse_hex_unicode(hex_str : String) -> Int? {
   if hex_str.length() != 4 && hex_str.length() != 8 {
     return None
   }
-  
   let mut result = 0
   for i = 0; i < hex_str.length(); i = i + 1 {
     let ch = hex_str[i]
@@ -431,7 +413,6 @@ fn parse_hex_unicode(hex_str : String) -> Int? {
     }
     result = result * 16 + digit
   }
-  
   Some(result)
 }
 
@@ -441,32 +422,44 @@ pub fn needs_quoting(s : String) -> Bool {
   if s.length() == 0 {
     return true
   }
-  
+
   // Check for special YAML values
   let lower = s.to_lower()
-  if lower == "true" || lower == "false" || lower == "null" || 
-     lower == "yes" || lower == "no" || lower == "on" || lower == "off" ||
-     lower == "~" {
+  if lower == "true" ||
+    lower == "false" ||
+    lower == "null" ||
+    lower == "yes" ||
+    lower == "no" ||
+    lower == "on" ||
+    lower == "off" ||
+    lower == "~" {
     return true
   }
-  
+
   // Check if it looks like a number
   if is_numeric_string(s) {
     return true
   }
-  
+
   // Check for special characters
   for i = 0; i < s.length(); i = i + 1 {
     let ch = s[i]
-    if is_flow_indicator(ch) || ch == COLON || ch == SHARP || 
-       ch == ASTERISK || ch == AMPERSAND || ch == EXCLAMATION ||
-       ch == VERTICAL_LINE || ch == GREATER_THAN || ch == SMALLER_THAN ||
-       ch == QUESTION || ch == COMMERCIAL_AT || ch == GRAVE_ACCENT ||
-       ch == PERCENT {
+    if is_flow_indicator(ch) ||
+      ch == COLON ||
+      ch == SHARP ||
+      ch == ASTERISK ||
+      ch == AMPERSAND ||
+      ch == EXCLAMATION ||
+      ch == VERTICAL_LINE ||
+      ch == GREATER_THAN ||
+      ch == SMALLER_THAN ||
+      ch == QUESTION ||
+      ch == COMMERCIAL_AT ||
+      ch == GRAVE_ACCENT ||
+      ch == PERCENT {
       return true
     }
   }
-  
   false
 }
 
@@ -476,16 +469,14 @@ pub fn is_numeric_string(s : String) -> Bool {
   if s.length() == 0 {
     return false
   }
-  
   let mut has_digit = false
   let mut has_dot = false
   let mut start = 0
-  
+
   // Check for sign
   if s[0] == PLUS || s[0] == MINUS {
     start = 1
   }
-  
   for i = start; i < s.length(); i = i + 1 {
     let ch = s[i]
     if is_decimal_digit(ch) {
@@ -496,7 +487,6 @@ pub fn is_numeric_string(s : String) -> Bool {
       return false
     }
   }
-  
   has_digit
 }
 
@@ -507,11 +497,9 @@ pub fn process_folded_string(s : String) -> String {
   let lines = split_lines(s)
   let mut result = ""
   let mut i = 0
-  
   while i < lines.length() {
     let line = lines[i]
     let trimmed = trim_whitespace(line)
-    
     if trimmed.length() == 0 {
       // Empty line - preserve as paragraph break
       result += "\n"
@@ -522,10 +510,8 @@ pub fn process_folded_string(s : String) -> String {
       }
       result += trimmed
     }
-    
     i += 1
   }
-  
   result
 }
 
@@ -538,7 +524,7 @@ pub fn process_literal_string(s : String) -> String {
   if lines.length() == 0 {
     return ""
   }
-  
+
   // Find minimum indentation (excluding empty lines)
   let mut min_indent = -1
   for i = 0; i < lines.length(); i = i + 1 {
@@ -550,11 +536,10 @@ pub fn process_literal_string(s : String) -> String {
       }
     }
   }
-  
   if min_indent <= 0 {
     return join(lines, "\n")
   }
-  
+
   // Remove common indentation
   let processed_lines = []
   for i = 0; i < lines.length(); i = i + 1 {
@@ -566,7 +551,6 @@ pub fn process_literal_string(s : String) -> String {
       processed_lines.push(line.substring(start=spaces_to_remove))
     }
   }
-  
   join(processed_lines, "\n")
 }
 
@@ -592,25 +576,20 @@ pub fn determine_quote_style(s : String) -> StyleVariant {
   if !needs_quoting(s) {
     return Plain
   }
-  
+
   // Count quote types to choose the best one
   let mut double_quotes = 0
   let mut single_quotes = 0
   let mut has_escapes = false
-  
   for i = 0; i < s.length(); i = i + 1 {
     let ch = s[i]
     match ch {
       DOUBLE_QUOTE => double_quotes += 1
       SINGLE_QUOTE => single_quotes += 1
       BACKSLASH | LINE_FEED | CARRIAGE_RETURN | TAB => has_escapes = true
-      _ => 
-        if ch < 32 || ch == 0x7f {
-          has_escapes = true
-        }
+      _ => if ch < 32 || ch == 0x7f { has_escapes = true }
     }
   }
-  
   if has_escapes {
     // Need escape sequences - must use double quotes
     DoubleQuoted
@@ -657,11 +636,9 @@ pub fn wrap_text(text : String, width : Int) -> Array[String] {
   if width <= 0 {
     return [text]
   }
-  
   let words = text.split(" ")
   let lines = []
   let mut current_line = ""
-  
   for i = 0; i < words.length(); i = i + 1 {
     let word = words[i]
     let potential_line = if current_line.length() == 0 {
@@ -669,7 +646,6 @@ pub fn wrap_text(text : String, width : Int) -> Array[String] {
     } else {
       current_line + " " + word
     }
-    
     if potential_line.length() <= width {
       current_line = potential_line
     } else {
@@ -679,11 +655,9 @@ pub fn wrap_text(text : String, width : Int) -> Array[String] {
       current_line = word
     }
   }
-  
   if current_line.length() > 0 {
     lines.push(current_line)
   }
-  
   lines
 }
 
@@ -777,8 +751,6 @@ pub fn yaml_value_is_null(value : YamlValue) -> Bool {
   }
 }
 
-
-
 ///|
 /// Deep equality check for YAML values
 pub fn yaml_values_equal(a : YamlValue, b : YamlValue) -> Bool {
@@ -788,7 +760,7 @@ pub fn yaml_values_equal(a : YamlValue, b : YamlValue) -> Bool {
     (Int(a_val), Int(b_val)) => a_val == b_val
     (Float(a_val), Float(b_val)) => a_val == b_val
     (String(a_val), String(b_val)) => a_val == b_val
-    (Array(a_arr), Array(b_arr)) => {
+    (Array(a_arr), Array(b_arr)) =>
       if a_arr.length() != b_arr.length() {
         false
       } else {
@@ -801,25 +773,19 @@ pub fn yaml_values_equal(a : YamlValue, b : YamlValue) -> Bool {
         }
         equal
       }
-    }
-    (Object(a_obj), Object(b_obj)) => {
+    (Object(a_obj), Object(b_obj)) =>
       if a_obj.size() != b_obj.size() {
         false
       } else {
         let mut equal = true
         a_obj.each(fn(key, a_val) {
           match b_obj.get(key) {
-            Some(b_val) => {
-              if !yaml_values_equal(a_val, b_val) {
-                equal = false
-              }
-            }
+            Some(b_val) => if !yaml_values_equal(a_val, b_val) { equal = false }
             None => equal = false
           }
         })
         equal
       }
-    }
     _ => false
   }
 }
@@ -831,7 +797,7 @@ pub fn yaml_value_to_json_string(value : YamlValue) -> String {
     Null => "null"
     Bool(b) => b.to_string()
     Int(i) => i.to_string()
-    Float(f) => {
+    Float(f) =>
       if f != f { // NaN
         "null"
       } else if f == infinity() || f == -infinity() {
@@ -839,7 +805,6 @@ pub fn yaml_value_to_json_string(value : YamlValue) -> String {
       } else {
         f.to_string()
       }
-    }
     String(s) => "\"" + escape_json_string(s) + "\""
     Array(arr) => {
       let items = []
@@ -851,7 +816,9 @@ pub fn yaml_value_to_json_string(value : YamlValue) -> String {
     Object(obj) => {
       let items = []
       obj.each(fn(k, v) {
-        items.push("\"" + escape_json_string(k) + "\": " + yaml_value_to_json_string(v))
+        items.push(
+          "\"" + escape_json_string(k) + "\": " + yaml_value_to_json_string(v),
+        )
       })
       "{" + join(items, ", ") + "}"
     }
@@ -862,7 +829,6 @@ pub fn yaml_value_to_json_string(value : YamlValue) -> String {
 /// Escape string for JSON output
 fn escape_json_string(s : String) -> String {
   let mut result = ""
-  
   for i = 0; i < s.length(); i = i + 1 {
     let ch = s[i]
     match ch {
@@ -873,7 +839,7 @@ fn escape_json_string(s : String) -> String {
       TAB => result += "\\t"
       0x08 => result += "\\b" // backspace
       0x0c => result += "\\f" // form feed
-      _ => 
+      _ =>
         if ch < 32 {
           result += "\\u" + format_hex_unicode_short(ch)
         } else {
@@ -881,7 +847,6 @@ fn escape_json_string(s : String) -> String {
         }
     }
   }
-  
   result
 }
 
@@ -891,24 +856,23 @@ pub fn merge_yaml_objects(target : YamlValue, source : YamlValue) -> YamlValue {
   match (target, source) {
     (Object(target_obj), Object(source_obj)) => {
       let result = Map::new()
-      
+
       // Copy all target properties
       target_obj.each(fn(k, v) { result[k] = v })
-      
+
       // Merge source properties
       source_obj.each(fn(k, v) {
         match target_obj.get(k) {
-          Some(existing) => {
+          Some(existing) =>
             // Deep merge if both are objects
             match (existing, v) {
-              (Object(_), Object(_)) => result[k] = merge_yaml_objects(existing, v)
+              (Object(_), Object(_)) =>
+                result[k] = merge_yaml_objects(existing, v)
               _ => result[k] = v // Override with source value
             }
-          }
           None => result[k] = v // Add new property
         }
       })
-      
       Object(result)
     }
     (_, source) => source // Non-object target, just return source
@@ -919,9 +883,8 @@ pub fn merge_yaml_objects(target : YamlValue, source : YamlValue) -> YamlValue {
 /// Get all keys from a YAML object (including nested)
 pub fn get_all_keys(value : YamlValue, prefix? : String = "") -> Array[String] {
   let keys = []
-  
   match value {
-    Object(obj) => {
+    Object(obj) =>
       obj.each(fn(k, v) {
         let full_key = if prefix.length() == 0 { k } else { prefix + "." + k }
         keys.push(full_key)
@@ -930,20 +893,21 @@ pub fn get_all_keys(value : YamlValue, prefix? : String = "") -> Array[String] {
           keys.push(nested_keys[i])
         }
       })
-    }
-    Array(arr) => {
+    Array(arr) =>
       for i = 0; i < arr.length(); i = i + 1 {
-        let index_key = if prefix.length() == 0 { i.to_string() } else { prefix + "[" + i.to_string() + "]" }
+        let index_key = if prefix.length() == 0 {
+          i.to_string()
+        } else {
+          prefix + "[" + i.to_string() + "]"
+        }
         keys.push(index_key)
         let nested_keys = get_all_keys(arr[i], prefix=index_key)
         for j = 0; j < nested_keys.length(); j = j + 1 {
           keys.push(nested_keys[j])
         }
       }
-    }
     _ => () // Scalar values have no nested keys
   }
-  
   keys
 }
 
@@ -953,36 +917,30 @@ pub fn get_value_at_path(value : YamlValue, path : String) -> YamlValue? {
   if path.length() == 0 {
     return Some(value)
   }
-  
   let parts = path.split(".")
   let mut current = value
-  
   for i = 0; i < parts.length(); i = i + 1 {
     let part = parts[i]
     match current {
-      Object(obj) => {
+      Object(obj) =>
         match obj.get(part) {
           Some(next_value) => current = next_value
           None => return None
         }
-      }
-      Array(arr) => {
+      Array(arr) =>
         // Try to parse part as array index
         match parse_array_index(part) {
-          Some(index) => {
+          Some(index) =>
             if index >= 0 && index < arr.length() {
               current = arr[index]
             } else {
               return None
             }
-          }
           None => return None
         }
-      }
       _ => return None // Can't traverse into scalar values
     }
   }
-  
   Some(current)
 }
 
@@ -992,7 +950,7 @@ fn parse_array_index(s : String) -> Int? {
   if s.length() == 0 {
     return None
   }
-  
+
   // Check if all characters are digits
   for i = 0; i < s.length(); i = i + 1 {
     let ch = s[i]
@@ -1000,33 +958,34 @@ fn parse_array_index(s : String) -> Int? {
       return None
     }
   }
-  
   Some(parse_decimal(s))
 }
 
 ///|
 /// Set value at path (dot notation)
-pub fn set_value_at_path(value : YamlValue, path : String, new_value : YamlValue) -> YamlValue {
+pub fn set_value_at_path(
+  value : YamlValue,
+  path : String,
+  new_value : YamlValue,
+) -> YamlValue {
   if path.length() == 0 {
     return new_value
   }
-  
   let parts = path.split(".")
-  
   match value {
     Object(obj) => {
       let result = Map::new()
       obj.each(fn(k, v) { result[k] = v }) // Copy existing properties
-      
       if parts.length() == 1 {
         result[parts[0]] = new_value
       } else {
         let first_part = parts[0]
         let remaining_path = join(parts.slice(start=1), ".")
         let existing = obj.get(first_part).or(Object(Map::new()))
-        result[first_part] = set_value_at_path(existing, remaining_path, new_value)
+        result[first_part] = set_value_at_path(
+          existing, remaining_path, new_value,
+        )
       }
-      
       Object(result)
     }
     _ => {
@@ -1037,7 +996,11 @@ pub fn set_value_at_path(value : YamlValue, path : String, new_value : YamlValue
       } else {
         let first_part = parts[0]
         let remaining_path = join(parts.slice(start=1), ".")
-        result[first_part] = set_value_at_path(Object(Map::new()), remaining_path, new_value)
+        result[first_part] = set_value_at_path(
+          Object(Map::new()),
+          remaining_path,
+          new_value,
+        )
       }
       Object(result)
     }
@@ -1060,11 +1023,13 @@ pub fn get_yaml_type_name(value : YamlValue) -> String {
 
 ///|
 /// Flatten nested YAML object to dot notation
-pub fn flatten_yaml_object(value : YamlValue, prefix? : String = "") -> Map[String, YamlValue] {
+pub fn flatten_yaml_object(
+  value : YamlValue,
+  prefix? : String = "",
+) -> Map[String, YamlValue] {
   let result = Map::new()
-  
   match value {
-    Object(obj) => {
+    Object(obj) =>
       obj.each(fn(k, v) {
         let key = if prefix.length() == 0 { k } else { prefix + "." + k }
         match v {
@@ -1075,13 +1040,11 @@ pub fn flatten_yaml_object(value : YamlValue, prefix? : String = "") -> Map[Stri
           _ => result[key] = v
         }
       })
-    }
     _ => {
       let key = if prefix.length() == 0 { "value" } else { prefix }
       result[key] = value
     }
   }
-  
   result
 }
 
@@ -1089,18 +1052,15 @@ pub fn flatten_yaml_object(value : YamlValue, prefix? : String = "") -> Map[Stri
 /// Unflatten dot notation back to nested YAML object
 pub fn unflatten_yaml_object(flat : Map[String, YamlValue]) -> YamlValue {
   let result = Map::new()
-  
   flat.each(fn(path, value) {
     let mut current = result
     let parts = path.split(".")
-    
     for i = 0; i < parts.length() - 1; i = i + 1 {
       let part = parts[i]
       match current.get(part) {
-        Some(Object(nested)) => {
+        Some(Object(nested)) =>
           // Continue with existing nested object
           current = nested
-        }
         _ => {
           // Create new nested object
           let new_nested = Map::new()
@@ -1109,13 +1069,12 @@ pub fn unflatten_yaml_object(flat : Map[String, YamlValue]) -> YamlValue {
         }
       }
     }
-    
+
     // Set the final value
     if parts.length() > 0 {
       current[parts[parts.length() - 1]] = value
     }
   })
-  
   Object(result)
 }
 

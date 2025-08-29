@@ -58,7 +58,11 @@ const TAB : Int = 0x09
 
 const VERTICAL_LINE : Int = 0x7c
 
+fn binary_type() -> YamlType[String]
+
 fn bool_type() -> YamlType[Bool]
+
+fn calculate_yaml_size(YamlValue) -> Int
 
 fn clone_yaml_value(YamlValue) -> YamlValue
 
@@ -66,23 +70,43 @@ fn codepoint_to_string(Int) -> String
 
 fn core_schema() -> Schema
 
+fn count_leading_whitespace(String) -> Int
+
 fn decimal_char_to_number(Int) -> Int
 
 fn default_schema() -> Schema
+
+fn determine_quote_style(String) -> StyleVariant
+
+fn escape_yaml_string(String) -> String
 
 fn extended_schema() -> Schema
 
 fn failsafe_schema() -> Schema
 
+fn flatten_yaml_object(YamlValue, prefix? : String) -> Map[String, YamlValue]
+
 fn float_type() -> YamlType[Double]
 
+fn get_all_keys(YamlValue, prefix? : String) -> Array[String]
+
 fn get_schema(String) -> Schema
+
+fn get_value_at_path(YamlValue, String) -> YamlValue?
+
+fn get_yaml_type_name(YamlValue) -> String
 
 fn hex_char_to_number(Int) -> Int
 
 fn int_type() -> YamlType[Int]
 
 fn is_decimal_digit(Int) -> Bool
+
+fn is_document_end(String) -> Bool
+
+fn is_document_start(String) -> Bool
+
+fn is_empty_line(String) -> Bool
 
 fn is_eol(Int) -> Bool
 
@@ -92,6 +116,8 @@ fn is_hex_digit(Int) -> Bool
 
 fn is_negative_zero(Double) -> Bool
 
+fn is_numeric_string(String) -> Bool
+
 fn is_object(YamlValue) -> Bool
 
 fn is_plain_object(YamlValue) -> Bool
@@ -100,21 +126,65 @@ fn is_printable(Int) -> Bool
 
 fn is_whitespace_or_eol(Int) -> Bool
 
+fn is_yaml_empty(YamlValue) -> Bool
+
 fn json_schema() -> Schema
 
 fn map_type() -> YamlType[Map[String, YamlValue]]
 
+fn merge_type() -> YamlType[YamlValue]
+
+fn merge_yaml_objects(YamlValue, YamlValue) -> YamlValue
+
+fn needs_quoting(String) -> Bool
+
+fn normalize_line_endings(String) -> String
+
 fn null_type() -> YamlType[Unit]
+
+fn omap_type() -> YamlType[Array[(String, YamlValue)]]
+
+fn pad_string(String, Int) -> String
+
+fn pairs_type() -> YamlType[Array[(String, YamlValue)]]
 
 fn parse(String, options? : ParseOptions) -> YamlValue raise YamlParseError
 
+fn parse_all(String, options? : ParseOptions) -> Array[YamlValue] raise YamlParseError
+
+fn process_folded_string(String) -> String
+
+fn process_literal_string(String) -> String
+
 fn resolve_scalar(String, Schema) -> YamlValue
+
+fn sanitize_input(String) -> String
 
 fn seq_type() -> YamlType[Array[YamlValue]]
 
+fn set_type() -> YamlType[Array[String]]
+
+fn set_value_at_path(YamlValue, String, YamlValue) -> YamlValue
+
+fn split_lines(String) -> Array[String]
+
 fn str_type() -> YamlType[String]
 
+fn string_ends_with(String, String) -> Bool
+
 fn stringify(YamlValue, options? : StringifyOptions) -> String
+
+fn suggest_block_style(String) -> StyleVariant
+
+fn timestamp_type() -> YamlType[String]
+
+fn trim_whitespace(String) -> String
+
+fn unescape_yaml_string(String) -> String
+
+fn unflatten_yaml_object(Map[String, YamlValue]) -> YamlValue
+
+fn wrap_text(String, Int) -> Array[String]
 
 fn yaml_array(Array[YamlValue]) -> YamlValue
 
@@ -132,9 +202,13 @@ fn yaml_value_to_double(YamlValue) -> Double?
 
 fn yaml_value_to_int(YamlValue) -> Int?
 
+fn yaml_value_to_json_string(YamlValue) -> String
+
 fn yaml_value_to_object(YamlValue) -> Map[String, YamlValue]?
 
 fn yaml_value_to_string(YamlValue) -> String?
+
+fn yaml_values_equal(YamlValue, YamlValue) -> Bool
 
 // Errors
 type YamlParseError
@@ -208,6 +282,11 @@ pub enum StyleVariant {
   Binary
   Octal
   Hexadecimal
+  Literal
+  Folded
+  Plain
+  DoubleQuoted
+  SingleQuoted
 }
 impl Eq for StyleVariant
 impl Show for StyleVariant
