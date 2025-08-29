@@ -14,7 +14,7 @@ struct ParserState {
 
 ///|
 fn ParserState::new(input : String, options : ParseOptions) -> ParserState {
-  let sanitized_input = sanitize_input(input)
+  let sanitized_input = sanitize_input_internal(input)
   {
     input: sanitized_input,
     position: 0,
@@ -83,22 +83,11 @@ fn ParserState::error(self : ParserState, message : String) -> YamlParseError {
 }
 
 ///|
-/// Sanitize input string for parsing
-fn sanitize_input(input : String) -> String {
-  let mut result = input
-
-  // Add trailing newline if not exists
-  if result.length() > 0 && !is_eol(result[result.length() - 1]) {
-    result = result + "\n"
-  }
-
-  // Strip BOM
-  if result.length() > 0 && result[0] == BOM {
-    result = result.substring(start=1)
-  }
-
-  // Add string terminator
-  result + "\u{0000}"
+/// Sanitize input string for parsing (internal)
+fn sanitize_input_internal(input : String) -> String {
+  // Use the improved sanitize_input from utils
+  let normalized = normalize_line_endings(input)
+  sanitize_input(normalized)
 }
 
 ///|
@@ -398,26 +387,85 @@ fn parse_value(state : ParserState) -> YamlValue raise YamlParseError {
 }
 
 ///|
+/// Check if current position is at a document separator
+fn ParserState::is_at_document_separator(self : ParserState) -> Bool {
+  self.current_char() == MINUS &&
+  self.peek_char(1) == MINUS &&
+  self.peek_char(2) == MINUS &&
+  (self.peek_char(3) == 0 || is_whitespace_or_eol(self.peek_char(3)))
+}
+
+///|
+/// Skip document separator (---)
+fn ParserState::skip_document_separator(self : ParserState) -> Unit {
+  if self.is_at_document_separator() {
+    self.advance() // Skip first '-'
+    self.advance() // Skip second '-'
+    self.advance() // Skip third '-'
+    self.skip_whitespace()
+  }
+}
+
+///|
+/// Read all documents from the input
+fn ParserState::read_documents(self : ParserState) -> Array[YamlValue] raise YamlParseError {
+  let documents = []
+  self.skip_whitespace()
+  
+  // Handle initial document separator if present
+  self.skip_document_separator()
+  
+  while self.current_char() != 0 {
+    self.skip_whitespace()
+    if self.current_char() == 0 {
+      break
+    }
+    
+    let document = parse_value(self)
+    documents.push(document)
+    
+    self.skip_whitespace()
+    
+    if self.is_at_document_separator() {
+      self.skip_document_separator()
+    } else if self.current_char() != 0 {
+      // If there's more content but no separator, it's an error
+      break
+    }
+  }
+  
+  documents
+}
+
+///|
 /// Parse a YAML string and return the parsed value
 pub fn parse(
   content : String,
   options? : ParseOptions = ParseOptions::new(),
 ) -> YamlValue raise YamlParseError {
   let state = ParserState::new(content, options)
-  let result = parse_value(state)
-
-  // Skip any remaining whitespace
-  state.skip_whitespace()
-
-  // Check for additional content (multiple documents)
-  if state.current_char() != 0 {
-    if state.current_char() == MINUS &&
-      state.peek_char(1) == MINUS &&
-      state.peek_char(2) == MINUS {
-      raise state.error(
-        "Found more than 1 document in the stream: expected a single document",
-      )
-    }
+  
+  // Use read_documents to get all documents
+  let documents = state.read_documents()
+  
+  if documents.length() == 0 {
+    YamlValue::Null
+  } else if documents.length() == 1 {
+    documents[0]
+  } else {
+    raise state.error(
+      "Found more than 1 document in the stream: expected a single document",
+    )
   }
-  result
+}
+
+///|
+/// Parse multiple YAML documents from a single string
+/// Returns an array of parsed documents
+pub fn parse_all(
+  content : String,
+  options? : ParseOptions = ParseOptions::new(),
+) -> Array[YamlValue] raise YamlParseError {
+  let state = ParserState::new(content, options)
+  state.read_documents()
 }

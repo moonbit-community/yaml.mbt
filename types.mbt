@@ -22,6 +22,11 @@ pub enum StyleVariant {
   Binary
   Octal
   Hexadecimal
+  Literal
+  Folded
+  Plain
+  DoubleQuoted
+  SingleQuoted
 } derive(Eq, Show)
 
 ///|

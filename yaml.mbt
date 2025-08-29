@@ -131,6 +131,33 @@ pub fn yaml_array(values : Array[YamlValue]) -> YamlValue {
   Array(values)
 }
 
+// Directly export needed utility functions
+pub fn is_object(value : YamlValue) -> Bool {
+  match value {
+    Object(_) => true
+    _ => false
+  }
+}
+
+pub fn is_plain_object(value : YamlValue) -> Bool {
+  match value {
+    Object(_) => true
+    _ => false
+  }
+}
+
+pub fn is_negative_zero(f : Double) -> Bool {
+  f == 0.0 && 1.0 / f < 0.0
+}
+
+// Character utilities are already declared in chars.mbt
+
+// Schema functions are already declared in schema.mbt
+
+// Type functions are already declared in builtin_types.mbt
+
+// Main parsing functions are already declared in parser.mbt and stringify.mbt
+
 // Helper string methods
 
 ///|
@@ -144,6 +171,32 @@ fn String::repeat(self : String, n : Int) -> String {
       result = result + self
     }
     result
+  }
+}
+
+///|
+/// Get minimum of two integers
+fn Int::min(self : Int, other : Int) -> Int {
+  if self < other { self } else { other }
+}
+
+///|
+/// Array slice method
+fn Array::slice[T](self : Array[T], start? : Int = 0, end? : Int = -1) -> Array[T] {
+  let actual_end = if end == -1 { self.length() } else { end }
+  let result = []
+  for i = start; i < actual_end && i < self.length(); i = i + 1 {
+    result.push(self[i])
+  }
+  result
+}
+
+///|
+/// Option or method
+fn Option::or[T](self : Option[T], default : T) -> T {
+  match self {
+    Some(value) => value
+    None => default
   }
 }
 
