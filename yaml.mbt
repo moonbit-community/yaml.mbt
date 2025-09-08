@@ -204,69 +204,6 @@ fn[T] Array::slice(
 }
 
 ///|
-/// Option or method
-fn[T] Option::or(self : T?, default : T) -> T {
-  match self {
-    Some(value) => value
-    None => default
-  }
-}
-
-///|
-/// Trim whitespace from both ends
-fn String::trim(self : String) -> String {
-  // Simple implementation - trim spaces and newlines
-  let mut start = 0
-  let mut end = self.length()
-  while start < end &&
-        (
-          self[start] == ' ' ||
-          self[start] == '\t' ||
-          self[start] == '\n' ||
-          self[start] == '\r'
-        ) {
-    start = start + 1
-  }
-  while end > start &&
-        (
-          self[end - 1] == ' ' ||
-          self[end - 1] == '\t' ||
-          self[end - 1] == '\n' ||
-          self[end - 1] == '\r'
-        ) {
-    end = end - 1
-  }
-  if start == 0 && end == self.length() {
-    self
-  } else {
-    self.substring(start~, end~)
-  }
-}
-
-///|
-/// Split string by delimiter
-fn String::split(self : String, delimiter : String) -> Array[String] {
-  let result = []
-  let mut current = ""
-  let mut i = 0
-  while i < self.length() {
-    if i + delimiter.length() <= self.length() {
-      let substr = self.substring(start=i, end=i + delimiter.length())
-      if substr == delimiter {
-        result.push(current)
-        current = ""
-        i = i + delimiter.length()
-        continue
-      }
-    }
-    current = current + Char::from_int(self[i]).to_string()
-    i = i + 1
-  }
-  result.push(current)
-  result
-}
-
-///|
 /// Check if string starts with prefix
 fn String::starts_with(self : String, prefix : String) -> Bool {
   if prefix.length() > self.length() {

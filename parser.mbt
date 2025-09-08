@@ -247,7 +247,7 @@ fn contains_dot(text : String) -> Bool {
 
 ///|
 /// Simple integer parsing
-fn parse_int_simple(text : String) -> Int {
+fn parse_int_simple(text : @string.View) -> Int {
   let mut result = 0
   let mut negative = false
   let start = if text[0] == 45 { // 45 is '-'
@@ -272,7 +272,7 @@ fn parse_int_simple(text : String) -> Int {
 fn parse_double_simple(text : String) -> Double {
   // Very basic implementation - just convert to Int and then to Double for now
   // A full implementation would handle decimal points properly
-  let parts = text.split(".")
+  let parts = text.split(".").collect()
   if parts.length() == 2 {
     let int_part = parse_int_simple(parts[0])
     let frac_part = parse_int_simple(parts[1])

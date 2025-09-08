@@ -309,9 +309,9 @@ fn float_yaml_type() -> YamlType[YamlValue] {
         Float(f) =>
           if f != f { // NaN check
             ".nan"
-          } else if f == infinity() {
+          } else if f.is_pos_inf() {
             ".inf"
-          } else if f == -infinity() {
+          } else if f.is_neg_inf() {
             "-.inf"
           } else {
             f.to_string()

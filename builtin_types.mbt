@@ -164,9 +164,9 @@ pub fn float_type() -> YamlType[Double] {
     represent: Some(fn(data, style) {
       if data != data { // NaN check
         ".nan"
-      } else if data == infinity() {
+      } else if data.is_pos_inf() {
         ".inf"
-      } else if data == -infinity() {
+      } else if data.is_neg_inf() {
         "-.inf"
       } else {
         data.to_string()
@@ -653,8 +653,8 @@ fn resolve_yaml_float(data : String) -> Bool {
 fn construct_yaml_float(data : String) -> Double {
   match data {
     ".nan" | ".NaN" | ".NAN" => 0.0 / 0.0 // NaN
-    ".inf" | ".Inf" | ".INF" | "+.inf" | "+.Inf" | "+.INF" => infinity()
-    "-.inf" | "-.Inf" | "-.INF" => -infinity()
+    ".inf" | ".Inf" | ".INF" | "+.inf" | "+.Inf" | "+.INF" => @double.infinity
+    "-.inf" | "-.Inf" | "-.INF" => @double.neg_infinity
     _ => parse_double(data)
   }
 }
@@ -741,7 +741,7 @@ fn to_base_string(n : Int, base : Int) -> String {
   let digits = "0123456789abcdef"
   while num > 0 {
     let digit = num % base
-    result = Char::from_int(digits[digit]).to_string() + result
+    result = Int::unsafe_to_char(digits[digit]).to_string() + result
     num /= base
   }
   result

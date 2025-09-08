@@ -71,7 +71,7 @@ pub fn normalize_line_endings(input : String) -> String {
         i += 1
       }
     } else {
-      result += Char::from_int(ch).to_string()
+      result += Int::unsafe_to_char(ch).to_string()
       i += 1
     }
   }
@@ -636,7 +636,7 @@ pub fn wrap_text(text : String, width : Int) -> Array[String] {
   if width <= 0 {
     return [text]
   }
-  let words = text.split(" ")
+  let words = text.split(" ").collect()
   let lines = []
   let mut current_line = ""
   for i = 0; i < words.length(); i = i + 1 {
@@ -644,15 +644,15 @@ pub fn wrap_text(text : String, width : Int) -> Array[String] {
     let potential_line = if current_line.length() == 0 {
       word
     } else {
-      current_line + " " + word
+      current_line + " " + word.to_string()
     }
     if potential_line.length() <= width {
-      current_line = potential_line
+      current_line = potential_line.to_string()
     } else {
       if current_line.length() > 0 {
         lines.push(current_line)
       }
-      current_line = word
+      current_line = word.to_string()
     }
   }
   if current_line.length() > 0 {
@@ -800,7 +800,7 @@ pub fn yaml_value_to_json_string(value : YamlValue) -> String {
     Float(f) =>
       if f != f { // NaN
         "null"
-      } else if f == infinity() || f == -infinity() {
+      } else if f.is_pos_inf() || f.is_neg_inf() {
         "null"
       } else {
         f.to_string()
@@ -843,7 +843,7 @@ fn escape_json_string(s : String) -> String {
         if ch < 32 {
           result += "\\u" + format_hex_unicode_short(ch)
         } else {
-          result += Char::from_int(ch).to_string()
+          result += Int::unsafe_to_char(ch).to_string()
         }
     }
   }
@@ -917,19 +917,19 @@ pub fn get_value_at_path(value : YamlValue, path : String) -> YamlValue? {
   if path.length() == 0 {
     return Some(value)
   }
-  let parts = path.split(".")
+  let parts = path.split(".").collect()
   let mut current = value
   for i = 0; i < parts.length(); i = i + 1 {
     let part = parts[i]
     match current {
       Object(obj) =>
-        match obj.get(part) {
+        match obj.get(part.to_string()) {
           Some(next_value) => current = next_value
           None => return None
         }
       Array(arr) =>
         // Try to parse part as array index
-        match parse_array_index(part) {
+        match parse_array_index(part.to_string()) {
           Some(index) =>
             if index >= 0 && index < arr.length() {
               current = arr[index]
@@ -971,18 +971,18 @@ pub fn set_value_at_path(
   if path.length() == 0 {
     return new_value
   }
-  let parts = path.split(".")
+  let parts = path.split(".").collect()
   match value {
     Object(obj) => {
       let result = Map::new()
       obj.each(fn(k, v) { result[k] = v }) // Copy existing properties
       if parts.length() == 1 {
-        result[parts[0]] = new_value
+        result[parts[0].to_string()] = new_value
       } else {
         let first_part = parts[0]
-        let remaining_path = join(parts.slice(start=1), ".")
-        let existing = obj.get(first_part).or(Object(Map::new()))
-        result[first_part] = set_value_at_path(
+        let remaining_path = parts.slice(start=1).join_views(".")
+        let existing = obj.get(first_part.to_string()).unwrap_or(Object(Map::new()))
+        result[first_part.to_string()] = set_value_at_path(
           existing, remaining_path, new_value,
         )
       }
@@ -992,11 +992,11 @@ pub fn set_value_at_path(
       // For non-objects, create new object with the path
       let result = Map::new()
       if parts.length() == 1 {
-        result[parts[0]] = new_value
+        result[parts[0].to_string()] = new_value
       } else {
         let first_part = parts[0]
-        let remaining_path = join(parts.slice(start=1), ".")
-        result[first_part] = set_value_at_path(
+        let remaining_path = parts.slice(start=1).join_views(".")
+        result[first_part.to_string()] = set_value_at_path(
           Object(Map::new()),
           remaining_path,
           new_value,
@@ -1051,20 +1051,19 @@ pub fn flatten_yaml_object(
 ///|
 /// Unflatten dot notation back to nested YAML object
 pub fn unflatten_yaml_object(flat : Map[String, YamlValue]) -> YamlValue {
-  let result = Map::new()
+  let mut current = Map::new()
   flat.each(fn(path, value) {
-    let mut current = result
-    let parts = path.split(".")
+    let parts = path.split(".").collect()
     for i = 0; i < parts.length() - 1; i = i + 1 {
       let part = parts[i]
-      match current.get(part) {
+      match current.get(part.to_string()) {
         Some(Object(nested)) =>
           // Continue with existing nested object
           current = nested
         _ => {
           // Create new nested object
           let new_nested = Map::new()
-          current[part] = Object(new_nested)
+          current[part.to_string()] = Object(new_nested)
           current = new_nested
         }
       }
@@ -1072,10 +1071,10 @@ pub fn unflatten_yaml_object(flat : Map[String, YamlValue]) -> YamlValue {
 
     // Set the final value
     if parts.length() > 0 {
-      current[parts[parts.length() - 1]] = value
+      current[parts[parts.length() - 1].to_string()] = value
     }
   })
-  Object(result)
+  Object(current)
 }
 
 ///|
@@ -1100,8 +1099,15 @@ pub fn is_yaml_empty(value : YamlValue) -> Bool {
   }
 }
 
-///|
-/// Create a simple helper for infinity detection
-fn infinity() -> Double {
-  1.0 / 0.0
+fn Array::join_views(self : Array[@string.View], sep : String) -> String {
+  if self.length() == 0 {
+    return ""
+  }
+  let result = StringBuilder::new()
+  result.write_iter(self[0].iter())
+  for i = 1; i < self.length(); i = i + 1 {
+    result.write_string(sep) 
+    result.write_iter(self[i].iter())
+  }
+  result.to_string()
 }
