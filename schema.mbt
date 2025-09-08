@@ -17,18 +17,18 @@ pub enum SchemaType {
 ///|
 /// Type map for organizing types by kind
 pub struct TypeMap {
-  pub fallback : Map[String, YamlType[YamlValue]]
-  pub mapping : Map[String, YamlType[YamlValue]]
-  pub scalar : Map[String, YamlType[YamlValue]]
-  pub sequence : Map[String, YamlType[YamlValue]]
+  fallback : Map[String, YamlType[YamlValue]]
+  mapping : Map[String, YamlType[YamlValue]]
+  scalar : Map[String, YamlType[YamlValue]]
+  sequence : Map[String, YamlType[YamlValue]]
 }
 
 ///|
 /// YAML Schema containing implicit and explicit types
 pub struct Schema {
-  pub implicit_types : Array[YamlType[YamlValue]] // Types resolved implicitly
-  pub explicit_types : Array[YamlType[YamlValue]] // Types requiring explicit tags  
-  pub type_map : TypeMap
+  implicit_types : Array[YamlType[YamlValue]] // Types resolved implicitly
+  explicit_types : Array[YamlType[YamlValue]] // Types requiring explicit tags  
+  type_map : TypeMap
 }
 
 ///|

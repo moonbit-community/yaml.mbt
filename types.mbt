@@ -37,13 +37,13 @@ pub typealias (T, StyleVariant?) -> String as RepresentFn[T]
 /// YAML type definition structure
 /// Generic type T represents the actual MoonBit type this YAML type handles
 pub struct YamlType[T] {
-  pub tag : String // YAML tag (e.g., "tag:yaml.org,2002:str")
-  pub kind : KindType // Kind of YAML structure
-  pub predicate : (YamlValue) -> Bool // Check if a value matches this type
-  pub represent : RepresentFn[T]? // How to serialize this type
-  pub default_style : StyleVariant? // Default serialization style
-  pub resolve : (YamlValue) -> Bool // Check if value can be resolved to this type
-  pub construct : (YamlValue) -> T // Construct value from YAML
+  tag : String // YAML tag (e.g., "tag:yaml.org,2002:str")
+  kind : KindType // Kind of YAML structure
+  predicate : (YamlValue) -> Bool // Check if a value matches this type
+  represent : RepresentFn[T]? // How to serialize this type
+  default_style : StyleVariant? // Default serialization style
+  resolve : (YamlValue) -> Bool // Check if value can be resolved to this type
+  construct : (YamlValue) -> T // Construct value from YAML
 }
 
 ///|
@@ -63,17 +63,17 @@ suberror YamlParseError YamlError
 ///|
 /// Position tracking in input
 pub struct Position {
-  pub line : Int
-  pub column : Int
-  pub index : Int
+  line : Int
+  column : Int
+  index : Int
 } derive(Eq, Show)
 
 ///|
 /// Parse options for YAML parsing
 pub struct ParseOptions {
-  pub schema : String // Schema name to use ("default", "json", etc.)
-  pub allow_duplicate_keys : Bool // Allow duplicate keys in mappings
-  pub on_warning : ((YamlError) -> Unit)? // Warning handler
+  schema : String // Schema name to use ("default", "json", etc.)
+  allow_duplicate_keys : Bool // Allow duplicate keys in mappings
+  on_warning : ((YamlError) -> Unit)? // Warning handler
 }
 
 ///|
@@ -91,17 +91,17 @@ pub fn ParseOptions::new() -> ParseOptions {
 ///|
 /// Stringify options for YAML serialization
 pub struct StringifyOptions {
-  pub indent : Int // Indentation width (default: 2)
-  pub array_indent : Bool // Add indent to array elements (default: true)
-  pub skip_invalid : Bool // Skip invalid types (default: false)
-  pub flow_level : Int // Flow vs block style level (-1 = block everywhere)
-  pub styles : Map[String, StyleVariant] // Tag-specific styles
-  pub schema : String // Schema name
-  pub sort_keys : Bool // Sort object keys
-  pub line_width : Int // Max line width (default: 80)
-  pub use_anchors : Bool // Use anchors for duplicate objects
-  pub compat_mode : Bool // YAML 1.1 compatibility mode
-  pub condense_flow : Bool // Condense flow sequences
+  indent : Int // Indentation width (default: 2)
+  array_indent : Bool // Add indent to array elements (default: true)
+  skip_invalid : Bool // Skip invalid types (default: false)
+  flow_level : Int // Flow vs block style level (-1 = block everywhere)
+  styles : Map[String, StyleVariant] // Tag-specific styles
+  schema : String // Schema name
+  sort_keys : Bool // Sort object keys
+  line_width : Int // Max line width (default: 80)
+  use_anchors : Bool // Use anchors for duplicate objects
+  compat_mode : Bool // YAML 1.1 compatibility mode
+  condense_flow : Bool // Condense flow sequences
 } derive(Show)
 
 ///|
