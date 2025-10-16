@@ -1,0 +1,96 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "myfreess/yaml"
+
+// Values
+
+// Errors
+pub suberror LexError {
+  LexError(mark~ : Marker, info~ : String)
+}
+
+// Types and methods
+pub enum Chomping {
+  Strip
+  Clip
+  Keep
+}
+impl Eq for Chomping
+
+type Indent
+
+type Lexer
+fn Lexer::fetch_next_token(Self) -> Unit raise LexError
+fn Lexer::new(StringView) -> Self
+
+pub struct Marker {
+  index : Int
+  line : Int
+  col : Int
+}
+
+type SimpleKey
+
+pub enum SkipTabs {
+  Yes
+  No
+  Result(encountered_tab~ : Bool, has_onemore_whitespace~ : Bool)
+}
+impl Eq for SkipTabs
+
+pub enum TScalarStyle {
+  Plain
+  SingleQuoted
+  DoubleQuoted
+  Literal
+  Folded
+}
+impl Eq for TScalarStyle
+impl Show for TScalarStyle
+
+pub struct Token {
+  marker : Marker
+  token_type : TokenType
+}
+
+pub enum TokenType {
+  StreamEnd
+  VersionDirective(major~ : Int, minor~ : Int)
+  TagDirective(handle~ : String, prefix~ : String)
+  DocumentStart
+  DocumentEnd
+  BlockSequenceStart
+  BlockMappingStart
+  BlockEnd
+  FlowSequenceStart
+  FlowSequenceEnd
+  FlowMappingStart
+  FlowMappingEnd
+  BlockEntry
+  FlowEntry
+  Key
+  Value
+  Alias(String)
+  Anchor(String)
+  Tag(handle~ : String, suffix~ : String)
+  Scalar(TScalarStyle, String)
+}
+impl Eq for TokenType
+
+pub(all) enum Yaml {
+  Real(String)
+  Integer(Int64)
+  String(String)
+  Boolean(Bool)
+  Array(Array[Yaml])
+  Map(Map[String, Yaml])
+  Alias(UInt)
+  Null
+  BadValue
+}
+impl Eq for Yaml
+impl Show for Yaml
+
+// Type aliases
+
+// Traits
+
