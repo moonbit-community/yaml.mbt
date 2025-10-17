@@ -1,0 +1,98 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "myfreess/yaml"
+
+// Values
+
+// Errors
+pub suberror ScanError {
+  ScanError(mark~ : Marker, info~ : String)
+}
+
+// Types and methods
+type Indent
+
+type Lexer
+fn Lexer::fetch_next_token(Self) -> Unit raise ScanError
+fn Lexer::new(StringView) -> Self
+fn Lexer::stream_ended(Self) -> Bool
+
+pub struct Marker {
+  index : Int
+  line : Int
+  col : Int
+}
+
+type SimpleKey
+
+type SkipTabs
+fn SkipTabs::equal(Self, Self) -> Bool // from trait `Eq`
+#deprecated
+fn SkipTabs::op_equal(Self, Self) -> Bool // from trait `Eq`
+impl Eq for SkipTabs
+
+pub enum TScalarStyle {
+  Plain
+  SingleQuoted
+  DoubleQuoted
+  Literal
+  Folded
+}
+fn TScalarStyle::equal(Self, Self) -> Bool // from trait `Eq`
+#deprecated
+fn TScalarStyle::op_equal(Self, Self) -> Bool // from trait `Eq`
+fn TScalarStyle::output(Self, &Logger) -> Unit // from trait `Show`
+fn TScalarStyle::to_string(Self) -> String // from trait `Show`
+impl Eq for TScalarStyle
+impl Show for TScalarStyle
+
+pub struct Token {
+  marker : Marker
+  token_type : TokenType
+}
+
+pub enum TokenType {
+  StreamEnd
+  VersionDirective(Int, Int)
+  TagDirective(String, String)
+  DocumentStart
+  DocumentEnd
+  BlockSequenceStart
+  BlockMappingStart
+  BlockEnd
+  FlowSequenceStart
+  FlowSequenceEnd
+  FlowMappingStart
+  FlowMappingEnd
+  BlockEntry
+  FlowEntry
+  Key
+  Value
+  Alias(String)
+  Anchor(String)
+  Tag(String, String)
+  Scalar(TScalarStyle, String)
+}
+
+pub(all) enum Yaml {
+  Real(String)
+  Integer(Int64)
+  String(String)
+  Boolean(Bool)
+  Array(Array[Yaml])
+  Map(Map[String, Yaml])
+  Alias(UInt)
+  Null
+  BadValue
+}
+fn Yaml::equal(Self, Self) -> Bool // from trait `Eq`
+#deprecated
+fn Yaml::op_equal(Self, Self) -> Bool // from trait `Eq`
+fn Yaml::output(Self, &Logger) -> Unit // from trait `Show`
+fn Yaml::to_string(Self) -> String // from trait `Show`
+impl Eq for Yaml
+impl Show for Yaml
+
+// Type aliases
+
+// Traits
+
