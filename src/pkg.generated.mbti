@@ -7,6 +7,7 @@ package "myfreess/yaml"
 pub suberror LexError {
   LexError(mark~ : Marker, info~ : String)
 }
+impl Show for LexError
 
 // Types and methods
 pub enum Chomping {
@@ -16,17 +17,19 @@ pub enum Chomping {
 }
 impl Eq for Chomping
 
-type Indent
-
 type Lexer
+fn Lexer::fetch_more_tokens(Self) -> Unit raise LexError
 fn Lexer::fetch_next_token(Self) -> Unit raise LexError
 fn Lexer::new(StringView) -> Self
+fn Lexer::next(Self) -> Token?
+fn Lexer::next_token(Self) -> Token? raise LexError
 
 pub struct Marker {
   index : Int
   line : Int
   col : Int
 }
+impl Show for Marker
 
 type SimpleKey
 
@@ -51,8 +54,10 @@ pub struct Token {
   marker : Marker
   token_type : TokenType
 }
+impl Show for Token
 
 pub enum TokenType {
+  StreamStart
   StreamEnd
   VersionDirective(major~ : Int, minor~ : Int)
   TagDirective(handle~ : String, prefix~ : String)
@@ -75,6 +80,7 @@ pub enum TokenType {
   Scalar(TScalarStyle, String)
 }
 impl Eq for TokenType
+impl Show for TokenType
 
 pub(all) enum Yaml {
   Real(String)
