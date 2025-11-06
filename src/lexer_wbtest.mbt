@@ -1,11 +1,11 @@
 ///|
-fn @yaml.Lexer::next_t(self : Lexer) -> TokenType {
+fn Lexer::next_t(self : Lexer) -> TokenType {
   self.next().unwrap().token_type
 }
 
 ///|
 test "empty" {
-  let p = @yaml.Lexer::new("")
+  let p = Lexer::new("")
   inspect(p.next_t(), content="StreamStart")
   inspect(p.next_t(), content="StreamEnd")
   inspect(p.next(), content="None")
@@ -13,7 +13,7 @@ test "empty" {
 
 ///|
 test "scalar" {
-  let p = @yaml.Lexer::new("a scalar")
+  let p = Lexer::new("a scalar")
   inspect(p.next_t(), content="StreamStart")
   inspect(
     p.next_t(),
@@ -31,7 +31,7 @@ test "explicit scalar" {
     #|---
     #|'a scalar'
     #|...
-  let p = @yaml.Lexer::new(s)
+  let p = Lexer::new(s)
   inspect(p.next_t(), content="StreamStart")
   inspect(p.next_t(), content="DocumentStart")
   inspect(
@@ -53,7 +53,7 @@ test "multiple documents" {
     #|'a scalar'
     #|---
     #|'a scalar'
-  let p = @yaml.Lexer::new(s)
+  let p = Lexer::new(s)
   inspect(p.next_t(), content="StreamStart")
   inspect(
     p.next_t(),
@@ -82,7 +82,7 @@ test "multiple documents" {
 ///|
 test "flow sequence" {
   let s = "[item 1, item 2, item 3]"
-  let p = @yaml.Lexer::new(s)
+  let p = Lexer::new(s)
   inspect(p.next_t(), content="StreamStart")
   inspect(p.next_t(), content="FlowSequenceStart")
   inspect(
@@ -117,7 +117,7 @@ test "flow mapping" {
     #|    a simple key: a value, # Note that the KEY token is produced.
     #|    ? a complex key: another value,
     #|}
-  let p = @yaml.Lexer::new(s)
+  let p = Lexer::new(s)
   inspect(p.next_t(), content="StreamStart")
   inspect(p.next_t(), content="FlowMappingStart")
   inspect(p.next_t(), content="Key")
@@ -166,7 +166,7 @@ test "block sequences" {
     #|-
     #|  key 1: value 1
     #|  key 2: value 2
-  let p = @yaml.Lexer::new(s)
+  let p = Lexer::new(s)
   inspect(p.next_t(), content="StreamStart")
   inspect(p.next_t(), content="BlockSequenceStart")
   inspect(p.next_t(), content="BlockEntry")
@@ -248,7 +248,7 @@ test "block mappings" {
     #|a sequence:
     #|  - item 1
     #|  - item 2
-  let p = @yaml.Lexer::new(s)
+  let p = Lexer::new(s)
   inspect(p.next_t(), content="StreamStart")
   inspect(p.next_t(), content="BlockMappingStart")
   inspect(p.next_t(), content="Key")
@@ -352,7 +352,7 @@ test "no block sequence start" {
     #|key:
     #|- item 1
     #|- item 2
-  let p = @yaml.Lexer::new(s)
+  let p = Lexer::new(s)
   inspect(p.next_t(), content="StreamStart")
   inspect(p.next_t(), content="BlockMappingStart")
   inspect(p.next_t(), content="Key")
@@ -391,7 +391,7 @@ test "collections in sequence" {
     #|  key 2: value 2
     #|- ? complex key
     #|  : complex value
-  let p = @yaml.Lexer::new(s)
+  let p = Lexer::new(s)
   inspect(p.next_t(), content="StreamStart")
   inspect(p.next_t(), content="BlockSequenceStart")
   inspect(p.next_t(), content="BlockEntry")
@@ -473,7 +473,7 @@ test "collections in mapping" {
     #|? a mapping
     #|: key 1: value 1
     #|  key 2: value 2
-  let p = @yaml.Lexer::new(s)
+  let p = Lexer::new(s)
   inspect(p.next_t(), content="StreamStart")
   inspect(p.next_t(), content="BlockMappingStart")
   inspect(p.next_t(), content="Key")
@@ -550,7 +550,7 @@ test "spec ex7_3" {
     #|    ? foo :,
     #|    : bar,
     #|}
-  let p = @yaml.Lexer::new(s)
+  let p = Lexer::new(s)
   inspect(p.next_t(), content="StreamStart")
   inspect(p.next_t(), content="FlowMappingStart")
   inspect(p.next_t(), content="Key")
@@ -581,7 +581,7 @@ test "plain scalar starting with indicators in flow" {
   // other YAML constructs. However, the “:”, “?” and “-” indicators may be used as the first
   // character if followed by a non-space “safe” character, as this causes no ambiguity."
   let s = "{a: :b}"
-  let p = @yaml.Lexer::new(s)
+  let p = Lexer::new(s)
   inspect(p.next_t(), content="StreamStart")
   inspect(p.next_t(), content="FlowMappingStart")
   inspect(p.next_t(), content="Key")
@@ -602,7 +602,7 @@ test "plain scalar starting with indicators in flow" {
   inspect(p.next_t(), content="StreamEnd")
   inspect(p.next(), content="None")
   let s = "{a: ?b}"
-  let p = @yaml.Lexer::new(s)
+  let p = Lexer::new(s)
   inspect(p.next_t(), content="StreamStart")
   inspect(p.next_t(), content="FlowMappingStart")
   inspect(p.next_t(), content="Key")
@@ -627,7 +627,7 @@ test "plain scalar starting with indicators in flow" {
 ///|
 test "plain scalar starting with indicators in block" {
   let s = ":a"
-  let p = @yaml.Lexer::new(s)
+  let p = Lexer::new(s)
   inspect(p.next_t(), content="StreamStart")
   inspect(
     p.next_t(),
@@ -638,7 +638,7 @@ test "plain scalar starting with indicators in block" {
   inspect(p.next_t(), content="StreamEnd")
   inspect(p.next(), content="None")
   let s = "?a"
-  let p = @yaml.Lexer::new(s)
+  let p = Lexer::new(s)
   inspect(p.next_t(), content="StreamStart")
   inspect(
     p.next_t(),
@@ -653,7 +653,7 @@ test "plain scalar starting with indicators in block" {
 ///|
 test "plain scalar containing indicators in block" {
   let s = "a:,b"
-  let p = @yaml.Lexer::new(s)
+  let p = Lexer::new(s)
   inspect(p.next_t(), content="StreamStart")
   inspect(
     p.next_t(),
@@ -664,7 +664,7 @@ test "plain scalar containing indicators in block" {
   inspect(p.next_t(), content="StreamEnd")
   inspect(p.next(), content="None")
   let s = ":,b"
-  let p = @yaml.Lexer::new(s)
+  let p = Lexer::new(s)
   inspect(p.next_t(), content="StreamStart")
   inspect(
     p.next_t(),
@@ -679,7 +679,7 @@ test "plain scalar containing indicators in block" {
 ///|
 test "lexer cr" {
   let s = "---\r\n- tok1\r\n- tok2"
-  let p = @yaml.Lexer::new(s)
+  let p = Lexer::new(s)
   inspect(p.next_t(), content="StreamStart")
   inspect(p.next_t(), content="DocumentStart")
   inspect(p.next_t(), content="BlockSequenceStart")
