@@ -1,36 +1,5 @@
 ///|
-pub enum TScalarStyle {
-  /// A YAML plain scalar.
-  Plain
-  /// A YAML single quoted scalar.
-  SingleQuoted
-  /// A YAML double quoted scalar.
-  DoubleQuoted
-  /// A YAML literal block (`|` block).
-  Literal
-  /// A YAML folded block (`>` block).
-  Folded
-} derive(Eq, Show)
-
-///|
-pub struct Marker {
-  /// The index (in chars) in the input string.
-  index : Int
-  /// The line (1-indexed).
-  line : Int
-  /// The column (1-indexed).
-  col : Int
-} derive(Show)
-
-///|
-pub suberror LexError {
-  /// - `mark`: The position at which the error happened in the source.
-  /// - `info`: Human-readable details about the error.
-  LexError(mark~ : Marker, info~ : String)
-} derive(Show)
-
-///|
-pub enum TokenType {
+priv enum TokenType {
   /// The start of the stream. Sent first, before even `TokenType::DocumentStart`.
   StreamStart
   /// The end of the stream, EOF.
@@ -80,7 +49,7 @@ pub enum TokenType {
 } derive(Eq, Show)
 
 ///|
-pub struct Token {
+priv struct Token {
   marker : Marker
   token_type : TokenType
 } derive(Show)
@@ -120,7 +89,7 @@ pub struct Token {
 ///
 /// In the second document however, reaching the EOF would stale the `SimpleKey` and no
 /// `TokenType::Key` would be emitted by the scanner.
-struct SimpleKey {
+priv struct SimpleKey {
   /// Whether the token this `SimpleKey` refers to may still be a key.
   ///
   /// Sometimes, when we have more context, we notice that what we thought could be a key no
@@ -198,7 +167,7 @@ priv struct Indent {
 /// This corresponds to the low-level interface when reading YAML, but it also holds sufficient context 
 /// to be able to disambiguate some of the constructs. It has understanding of indentation and whitespace and is able to
 /// generate error messages for some invalid YAML constructs.
-struct Lexer {
+priv struct Lexer {
   mut input : StringView
   /// The index (in chars) in the input string.
   mut index : Int
@@ -211,7 +180,7 @@ struct Lexer {
   /// Buffer for the next characters to consume.
   buffer : @deque.Deque[Char]
   /// The last error that happened.
-  mut error : LexError?
+  mut error : YamlError?
   /// Whether we have already emitted the `StreamStart` token.
   mut stream_start_produced : Bool
   /// Whether we have already emitted the `StreamEnd` token.
@@ -267,7 +236,7 @@ struct Lexer {
 const BUFFER_LEN = 16
 
 ///|
-pub fn Lexer::new(input : StringView) -> Lexer {
+fn Lexer::new(input : StringView) -> Lexer {
   Lexer::{
     input,
     index: 0,
@@ -294,7 +263,7 @@ pub fn Lexer::new(input : StringView) -> Lexer {
 
 ///|
 /// Get the last error that was encountered, if any.
-fn Lexer::get_error(self : Lexer) -> LexError? {
+fn Lexer::get_error(self : Lexer) -> YamlError? {
   self.error
 }
 
@@ -419,13 +388,19 @@ fn Lexer::stream_ended(self : Lexer) -> Bool {
 }
 
 ///|
+/// Return whether the `TokenType::StreamStart` event has been emitted
+fn Lexer::stream_started(self : Lexer) -> Bool {
+  self.stream_start_produced
+}
+
+///|
 /// Read and consume a line break (either `\r`, `\n` or `\r\n`).
 ///
 /// A `\n` is pushed into `s`.
 fn Lexer::read_break(self : Lexer, buf : StringBuilder) -> Unit {
   let c = self.buffer[0]
   let nc = self.buffer[1]
-  guard c.is_break()
+  // guard c.is_break()
   if c == '\r' && nc == '\n' {
     self.skip_blank()
   }
@@ -477,12 +452,12 @@ fn Lexer::disallow_simple_key(self : Lexer) -> Unit {
 }
 
 ///|
-pub fn Lexer::next(self : Lexer) -> Token? {
+fn Lexer::next(self : Lexer) -> Token? {
   if self.error is Some(_) {
     return None
   }
   let tok = self.next_token() catch {
-    LexError(_) as err => {
+    YamlError(_) as err => {
       self.error = Some(err)
       return None
     }
@@ -492,8 +467,8 @@ pub fn Lexer::next(self : Lexer) -> Token? {
 
 ///|
 /// Fetch the next token in the stream.
-/// Returns `LexError` when the scanner does not find the next expected token.
-pub fn Lexer::fetch_next_token(self : Lexer) -> Unit raise LexError {
+/// Returns `YamlError` when the scanner does not find the next expected token.
+fn Lexer::fetch_next_token(self : Lexer) -> Unit raise YamlError {
   self.lookahead(1)
   if !self.stream_start_produced {
     self.fetch_stream_start()
@@ -529,7 +504,7 @@ pub fn Lexer::fetch_next_token(self : Lexer) -> Unit raise LexError {
     self.fetch_document_indicator(TokenType::DocumentEnd)
     ignore(self.skip_ws_to_eol(SkipTabs::Yes))
     if !self.char().is_breakz() {
-      raise LexError::LexError(
+      raise YamlError::YamlError(
         mark=self.get_marker(),
         info="invalid content after document end marker",
       )
@@ -537,7 +512,10 @@ pub fn Lexer::fetch_next_token(self : Lexer) -> Unit raise LexError {
     return
   }
   if self.col < self.indent {
-    raise LexError::LexError(mark=self.get_marker(), info="invalid indentation")
+    raise YamlError::YamlError(
+      mark=self.get_marker(),
+      info="invalid indentation",
+    )
   }
   let c = self.buffer[0]
   let nc = self.buffer[1]
@@ -570,7 +548,7 @@ pub fn Lexer::fetch_next_token(self : Lexer) -> Unit raise LexError {
     ':' | '?' if nc.is_blank_or_breakz() && self.flow_level == 0 =>
       self.fetch_plain_scalar()
     '%' | '@' | '`' =>
-      raise LexError::LexError(
+      raise YamlError::YamlError(
         mark=self.get_marker(),
         info="unexpected character: \{c}",
       )
@@ -594,8 +572,8 @@ fn Lexer::fetch_stream_start(self : Lexer) -> Unit {
 ///|
 /// Return the next token in the stream.
 /// # Errors
-/// Returns `LexError` when scanning fails to find an expected next token.
-pub fn Lexer::next_token(self : Lexer) -> Token? raise LexError {
+/// Returns `YamlError` when scanning fails to find an expected next token.
+fn Lexer::next_token(self : Lexer) -> Token? raise YamlError {
   if self.stream_end_produced {
     return None
   }
@@ -603,7 +581,7 @@ pub fn Lexer::next_token(self : Lexer) -> Token? raise LexError {
     self.fetch_more_tokens()
   }
   guard self.tokens.pop_front() is Some(t) else {
-    raise LexError::LexError(
+    raise YamlError::YamlError(
       mark=self.get_marker(),
       info="did not find expected next token",
     )
@@ -619,8 +597,8 @@ pub fn Lexer::next_token(self : Lexer) -> Token? raise LexError {
 ///|
 /// Return the next token in the stream.
 /// # Errors
-/// Returns `LexError` when scanning fails to find an expected next token.
-pub fn Lexer::fetch_more_tokens(self : Lexer) -> Unit raise LexError {
+/// Returns `YamlError` when scanning fails to find an expected next token.
+fn Lexer::fetch_more_tokens(self : Lexer) -> Unit raise YamlError {
   let mut need_more = false
   while true {
     if self.tokens.is_empty() {
@@ -646,7 +624,7 @@ pub fn Lexer::fetch_more_tokens(self : Lexer) -> Unit raise LexError {
 }
 
 ///|
-fn Lexer::fetch_plain_scalar(self : Lexer) -> Unit raise LexError {
+fn Lexer::fetch_plain_scalar(self : Lexer) -> Unit raise YamlError {
   self.save_simple_key()
   self.disallow_simple_key()
   let tok = self.scan_plain_scalar()
@@ -658,12 +636,12 @@ fn Lexer::fetch_plain_scalar(self : Lexer) -> Unit raise LexError {
 ///
 /// Plain scalars are the most readable but restricted style. They may span multiple lines in
 /// some contexts.
-fn Lexer::scan_plain_scalar(self : Lexer) -> Token raise LexError {
+fn Lexer::scan_plain_scalar(self : Lexer) -> Token raise YamlError {
   self.unroll_non_block_indents()
   let indent = self.indent + 1
   let start_mark = self.get_marker()
   if self.flow_level > 0 && self.col < indent {
-    raise LexError::LexError(
+    raise YamlError::YamlError(
       mark=start_mark,
       info="invalid indentation in flow construct",
     )
@@ -678,7 +656,7 @@ fn Lexer::scan_plain_scalar(self : Lexer) -> Token raise LexError {
       break
     }
     if self.flow_level > 0 && self.char() == '-' && self.buffer[1].is_flow() {
-      raise LexError::LexError(
+      raise YamlError::YamlError(
         mark=self.get_marker(),
         info="plain scalar cannot start with '-' followed by ,[]{}",
       )
@@ -740,7 +718,7 @@ fn Lexer::scan_plain_scalar(self : Lexer) -> Token raise LexError {
           // empty. Skip to the end of the line.
           ignore(self.skip_ws_to_eol(SkipTabs::Yes))
           if !self.char().is_breakz() {
-            raise LexError::LexError(
+            raise YamlError::YamlError(
               mark=start_mark,
               info="while scanning a plain scalar, found a tab",
             )
@@ -790,7 +768,10 @@ fn Lexer::next_can_be_plain_scalar(self : Lexer) -> Bool {
 }
 
 ///|
-fn Lexer::fetch_flow_scalar(self : Lexer, single : Bool) -> Unit raise LexError {
+fn Lexer::fetch_flow_scalar(
+  self : Lexer,
+  single : Bool,
+) -> Unit raise YamlError {
   self.save_simple_key()
   self.disallow_simple_key()
   let tok = self.scan_flow_scalar(single)
@@ -803,7 +784,10 @@ fn Lexer::fetch_flow_scalar(self : Lexer, single : Bool) -> Unit raise LexError 
 }
 
 ///|
-fn Lexer::scan_flow_scalar(self : Lexer, single : Bool) -> Token raise LexError {
+fn Lexer::scan_flow_scalar(
+  self : Lexer,
+  single : Bool,
+) -> Token raise YamlError {
   let start_mark = self.get_marker()
   let buf = StringBuilder::new()
   let leading_break = StringBuilder::new()
@@ -831,19 +815,19 @@ fn Lexer::scan_flow_scalar(self : Lexer, single : Bool) -> Token raise LexError 
         )
       ) &&
       self.buffer[3].is_blank_or_breakz() {
-      raise LexError::LexError(
+      raise YamlError::YamlError(
         mark=start_mark,
         info="while scanning a quoted scalar, found unexpected document indicator",
       )
     }
     if self.char().is_z() {
-      raise LexError::LexError(
+      raise YamlError::YamlError(
         mark=start_mark,
         info="while scanning a quoted scalar, found unexpected end of stream",
       )
     }
     if self.col < self.indent {
-      raise LexError::LexError(
+      raise YamlError::YamlError(
         mark=start_mark,
         info="invalid indentation in quoted scalar",
       )
@@ -864,7 +848,7 @@ fn Lexer::scan_flow_scalar(self : Lexer, single : Bool) -> Token raise LexError 
         // Consume a space or a tab character.
         if leading_blanks.val {
           if self.char() == '\t' && self.col < self.indent {
-            raise LexError::LexError(
+            raise YamlError::YamlError(
               mark=self.get_marker(),
               info="tab cannot be used as indentation",
             )
@@ -925,7 +909,7 @@ fn Lexer::scan_flow_scalar(self : Lexer, single : Bool) -> Token raise LexError 
     // Inside a flow context, this is allowed.
     ':' if self.flow_level > 0 => ()
     _ =>
-      raise LexError::LexError(
+      raise YamlError::YamlError(
         mark=self.get_marker(),
         info="invalid trailing content after double-quoted scalar",
       )
@@ -956,7 +940,7 @@ fn Lexer::consume_flow_scalar_non_whitespace_chars(
   buf : StringBuilder,
   leading_blanks : Ref[Bool],
   start_mark : Marker,
-) -> Unit raise LexError {
+) -> Unit raise YamlError {
   self.lookahead(2)
   while !self.char().is_blank_or_breakz() {
     match self.char() {
@@ -998,7 +982,7 @@ fn Lexer::consume_flow_scalar_non_whitespace_chars(
 fn Lexer::resolve_flow_scalar_escape_sequence(
   self : Lexer,
   start_mark : Marker,
-) -> Char raise LexError {
+) -> Char raise YamlError {
   let mut code_length = 0
   let mut ret = '\u{0}'
   match self.buffer[1] {
@@ -1027,7 +1011,7 @@ fn Lexer::resolve_flow_scalar_escape_sequence(
     'u' => code_length = 4
     'U' => code_length = 8
     _ =>
-      raise LexError::LexError(
+      raise YamlError::YamlError(
         mark=start_mark,
         info="while parsing a quoted scalar, found unknown escape character",
       )
@@ -1040,7 +1024,7 @@ fn Lexer::resolve_flow_scalar_escape_sequence(
     let mut value : Int = 32
     for i in 0..<code_length {
       if self.buffer[i].is_hex() {
-        raise LexError::LexError(
+        raise YamlError::YamlError(
           mark=start_mark,
           info="while parsing a quoted scalar, did not find expected hexadecimal number",
         )
@@ -1048,7 +1032,7 @@ fn Lexer::resolve_flow_scalar_escape_sequence(
       value = (value << 4) + self.buffer[i].as_hex()
     }
     guard value.to_char() is Some(ch) else {
-      raise LexError::LexError(
+      raise YamlError::YamlError(
         mark=start_mark,
         info="while parsing a quoted scalar, found invalid Unicode character escape code",
       )
@@ -1063,7 +1047,7 @@ fn Lexer::resolve_flow_scalar_escape_sequence(
 fn Lexer::fetch_block_scalar(
   self : Lexer,
   literal : Bool,
-) -> Unit raise LexError {
+) -> Unit raise YamlError {
   self.save_simple_key()
   self.allow_simple_key()
   let tok = self.scan_block_scalar(literal)
@@ -1074,7 +1058,7 @@ fn Lexer::fetch_block_scalar(
 fn Lexer::scan_block_scalar(
   self : Lexer,
   literal : Bool,
-) -> Token raise LexError {
+) -> Token raise YamlError {
   let start_mark = self.get_marker()
   let mut chomping = Chomping::Clip
   let mut increment = 0
@@ -1099,7 +1083,7 @@ fn Lexer::scan_block_scalar(
     self.skip_non_blank()
     if self.look_char().is_ascii_digit() {
       if self.char() == '0' {
-        raise LexError::LexError(
+        raise YamlError::YamlError(
           mark=start_mark,
           info="while scanning a block scalar, found an indentation indicator equal to 0",
         )
@@ -1109,7 +1093,7 @@ fn Lexer::scan_block_scalar(
     }
   } else if self.char().is_ascii_digit() {
     if self.char() == '0' {
-      raise LexError::LexError(
+      raise YamlError::YamlError(
         mark=start_mark,
         info="while scanning a block scalar, found an indentation indicator equal to 0",
       )
@@ -1129,8 +1113,8 @@ fn Lexer::scan_block_scalar(
   ignore(self.skip_ws_to_eol(SkipTabs::Yes))
 
   // Check if we are at the end of the line.
-  if self.look_char().is_breakz() {
-    raise LexError::LexError(
+  if !self.look_char().is_breakz() {
+    raise YamlError::YamlError(
       mark=start_mark,
       info="while scanning a block scalar, did not find expected comment or line break",
     )
@@ -1140,7 +1124,7 @@ fn Lexer::scan_block_scalar(
     self.read_break(chomping_break)
   }
   if self.look_char() == '\t' {
-    raise LexError::LexError(
+    raise YamlError::YamlError(
       mark=start_mark,
       info="a block scalar content cannot start with a tab",
     )
@@ -1185,14 +1169,14 @@ fn Lexer::scan_block_scalar(
     }
   }
   if self.col < indent.val && self.col > self.indent {
-    raise LexError::LexError(
+    raise YamlError::YamlError(
       mark=self.get_marker(),
       info="wrongly indented line in block scalar",
     )
   }
   let line_buffer = StringBuilder::new(size_hint=100)
   let start_mark = self.get_marker()
-  while self.col == indent.val && self.char().is_z() {
+  while self.col == indent.val && !self.char().is_z() {
     if indent.val == 0 {
       self.lookahead(4)
       if self.next_is_document_end() {
@@ -1281,7 +1265,7 @@ fn Lexer::scan_block_scalar_content_line(
     // We will read all consecutive non-breakz characters. We push them into a temporary buffer. 
     let mut line_buffer_size = 0
     let mut c = self.raw_read_char()
-    while c.is_breakz() {
+    while !c.is_breakz() {
       line_buffer.write_char(c)
       line_buffer_size += 1
       c = self.raw_read_char()
@@ -1396,7 +1380,7 @@ fn Lexer::unroll_non_block_indents(self : Lexer) -> Unit {
 }
 
 ///|
-fn Lexer::fetch_tag(self : Lexer) -> Unit raise LexError {
+fn Lexer::fetch_tag(self : Lexer) -> Unit raise YamlError {
   self.save_simple_key()
   self.disallow_simple_key()
   let tok = self.scan_tag()
@@ -1404,7 +1388,7 @@ fn Lexer::fetch_tag(self : Lexer) -> Unit raise LexError {
 }
 
 ///|
-fn Lexer::scan_tag(self : Lexer) -> Token raise LexError {
+fn Lexer::scan_tag(self : Lexer) -> Token raise YamlError {
   let start_mark = self.get_marker()
   let mut handle = ""
   let mut suffix = ""
@@ -1439,7 +1423,7 @@ fn Lexer::scan_tag(self : Lexer) -> Token raise LexError {
     // XXX: ex 7.2, an empty scalar can follow a secondary tag
     Token::{ marker: start_mark, token_type: TokenType::Tag(handle~, suffix~) }
   } else {
-    raise LexError::LexError(
+    raise YamlError::YamlError(
       mark=start_mark,
       info="while scanning a tag, did not find expected whitespace or line break",
     )
@@ -1453,7 +1437,7 @@ fn Lexer::scan_tag_shorthand_suffix(
   _is_secondary : Bool,
   head : String,
   mark : Marker,
-) -> String raise LexError {
+) -> String raise YamlError {
   let buf = StringBuilder::new()
 
   // Copy the head if needed.
@@ -1474,7 +1458,7 @@ fn Lexer::scan_tag_shorthand_suffix(
     length += 1
   }
   if length == 0 {
-    raise LexError::LexError(
+    raise YamlError::YamlError(
       mark~,
       info="while parsing a tag, did not find expected tag URI",
     )
@@ -1489,7 +1473,7 @@ fn Lexer::scan_tag_shorthand_suffix(
 fn Lexer::scan_verbatim_tag(
   self : Lexer,
   start_mark : Marker,
-) -> String raise LexError {
+) -> String raise YamlError {
   // Eat `!<`
   self.skip_non_blank()
   self.skip_non_blank()
@@ -1502,7 +1486,7 @@ fn Lexer::scan_verbatim_tag(
     }
   }
   if self.char() != '>' {
-    raise LexError::LexError(
+    raise YamlError::YamlError(
       mark=start_mark,
       info="while scanning a verbatim tag, did not find the expected '>'",
     )
@@ -1512,7 +1496,7 @@ fn Lexer::scan_verbatim_tag(
 }
 
 ///|
-fn Lexer::fetch_anchor(self : Lexer, is_alias : Bool) -> Unit raise LexError {
+fn Lexer::fetch_anchor(self : Lexer, is_alias : Bool) -> Unit raise YamlError {
   self.save_simple_key()
   self.disallow_simple_key()
   let tok = self.scan_anchor(is_alias)
@@ -1520,7 +1504,7 @@ fn Lexer::fetch_anchor(self : Lexer, is_alias : Bool) -> Unit raise LexError {
 }
 
 ///|
-fn Lexer::scan_anchor(self : Lexer, is_alias : Bool) -> Token raise LexError {
+fn Lexer::scan_anchor(self : Lexer, is_alias : Bool) -> Token raise YamlError {
   let buf = StringBuilder::new()
   let start_mark = self.get_marker()
   self.skip_non_blank()
@@ -1529,7 +1513,7 @@ fn Lexer::scan_anchor(self : Lexer, is_alias : Bool) -> Token raise LexError {
     self.skip_non_blank()
   }
   if buf.is_empty() {
-    raise LexError::LexError(
+    raise YamlError::YamlError(
       mark=start_mark,
       info="while scanning an anchor or alias, did not find expected alphabetic or numeric character",
     )
@@ -1546,7 +1530,7 @@ fn Lexer::scan_anchor(self : Lexer, is_alias : Bool) -> Token raise LexError {
 
 ///|
 /// Fetch a value from a mapping (after a `:`).
-fn Lexer::fetch_value(self : Lexer) -> Unit raise LexError {
+fn Lexer::fetch_value(self : Lexer) -> Unit raise YamlError {
   let sk = self.simple_keys.last().unwrap().clone()
   let start_mark = self.get_marker()
   self.implicit_flow_mapping = self.flow_level > 0 && !self.flow_mapping_started
@@ -1556,7 +1540,7 @@ fn Lexer::fetch_value(self : Lexer) -> Unit raise LexError {
   if self.look_char() == '\t' &&
     !self.skip_ws_to_eol(SkipTabs::Yes).has_valid_yaml_ws() &&
     (self.char() == '-' || self.char().is_alpha()) {
-    raise LexError::LexError(
+    raise YamlError::YamlError(
       mark=self.get_marker(),
       info="':' must be followed by a valid YAML whitespace",
     )
@@ -1567,7 +1551,7 @@ fn Lexer::fetch_value(self : Lexer) -> Unit raise LexError {
     self.insert_token(sk.token_number - self.tokens_parsed, tok)
     if self.implicit_flow_mapping {
       if sk.mark.line < start_mark.line {
-        raise LexError::LexError(
+        raise YamlError::YamlError(
           mark=start_mark,
           info="illegal placement of ':' indicator",
         )
@@ -1599,7 +1583,7 @@ fn Lexer::fetch_value(self : Lexer) -> Unit raise LexError {
     // The ':' indicator follows a complex key.
     if self.flow_level == 0 {
       if !self.simple_key_allowed {
-        raise LexError::LexError(
+        raise YamlError::YamlError(
           mark=start_mark,
           info="mapping values are not allowed in this context",
         )
@@ -1625,12 +1609,12 @@ fn Lexer::fetch_value(self : Lexer) -> Unit raise LexError {
 }
 
 ///|
-fn Lexer::fetch_key(self : Lexer) -> Unit raise LexError {
+fn Lexer::fetch_key(self : Lexer) -> Unit raise YamlError {
   let start_mark = self.get_marker()
   if self.flow_level == 0 {
     // Check if we are allowed to start a new key (not necessarily simple).
     if !self.simple_key_allowed {
-      raise LexError::LexError(
+      raise YamlError::YamlError(
         mark=self.get_marker(),
         info="mapping keys are not allowed in this context",
       )
@@ -1655,7 +1639,7 @@ fn Lexer::fetch_key(self : Lexer) -> Unit raise LexError {
   self.skip_non_blank()
   self.skip_yaml_whitespace()
   if self.char() == '\t' {
-    raise LexError::LexError(
+    raise YamlError::YamlError(
       mark=self.get_marker(),
       info="tabs disallowed in this context",
     )
@@ -1671,7 +1655,7 @@ fn Lexer::fetch_key(self : Lexer) -> Unit raise LexError {
 ///
 /// # Errors
 /// This function returns an error if no whitespace was found.
-fn Lexer::skip_yaml_whitespace(self : Lexer) -> Unit raise LexError {
+fn Lexer::skip_yaml_whitespace(self : Lexer) -> Unit raise YamlError {
   let mut need_whitespace = true
   while true {
     match self.look_char() {
@@ -1695,7 +1679,10 @@ fn Lexer::skip_yaml_whitespace(self : Lexer) -> Unit raise LexError {
     }
   }
   if need_whitespace {
-    raise LexError::LexError(mark=self.get_marker(), info="expected whitespace")
+    raise YamlError::YamlError(
+      mark=self.get_marker(),
+      info="expected whitespace",
+    )
   }
 }
 
@@ -1705,10 +1692,10 @@ fn Lexer::skip_yaml_whitespace(self : Lexer) -> Unit raise LexError {
 /// Add an indentation level and push a `BlockSequenceStart` token if needed, then push a
 /// `BlockEntry` token.
 /// This function only skips over the `-` and does not fetch the entry value.
-fn Lexer::fetch_block_entry(self : Lexer) -> Unit raise LexError {
+fn Lexer::fetch_block_entry(self : Lexer) -> Unit raise YamlError {
   if self.flow_level > 0 {
     // - * only allowed in block
-    raise LexError::LexError(
+    raise YamlError::YamlError(
       mark=self.get_marker(),
       info="'-' is only valid inside a block",
     )
@@ -1716,7 +1703,7 @@ fn Lexer::fetch_block_entry(self : Lexer) -> Unit raise LexError {
 
   // Check if we are allowed to start a new entry.
   if !self.simple_key_allowed {
-    raise LexError::LexError(
+    raise YamlError::YamlError(
       mark=self.get_marker(),
       info="block sequence entries are not allowed in this context",
     )
@@ -1725,7 +1712,7 @@ fn Lexer::fetch_block_entry(self : Lexer) -> Unit raise LexError {
   // ???, fixes test G9HC.
   if self.tokens.back() is Some({ marker, token_type: Anchor(_) | Tag(_) }) {
     if self.col == 0 && marker.col == 0 && self.indent > -1 {
-      raise LexError::LexError(
+      raise YamlError::YamlError(
         mark=marker,
         info="invalid indentation for anchor",
       )
@@ -1741,7 +1728,7 @@ fn Lexer::fetch_block_entry(self : Lexer) -> Unit raise LexError {
   let found_tabs = self.skip_ws_to_eol(SkipTabs::Yes).found_tabs()
   self.lookahead(2)
   if found_tabs && self.buffer[0] == '-' && self.buffer[1].is_blank_or_breakz() {
-    raise LexError::LexError(
+    raise YamlError::YamlError(
       mark=self.get_marker(),
       info="'-' must be followed by a valid YAML whitespace",
     )
@@ -1803,7 +1790,7 @@ fn Lexer::roll_indent(
 
 ///|
 /// Push the `FlowEntry` token and skip over the `,`.
-fn Lexer::fetch_flow_entry(self : Lexer) -> Unit raise LexError {
+fn Lexer::fetch_flow_entry(self : Lexer) -> Unit raise YamlError {
   self.remove_simple_key()
   self.allow_simple_key()
   self.end_implicit_mapping(self.get_marker())
@@ -1820,7 +1807,7 @@ fn Lexer::fetch_flow_entry(self : Lexer) -> Unit raise LexError {
 fn Lexer::fetch_flow_collection_end(
   self : Lexer,
   tok : TokenType,
-) -> Unit raise LexError {
+) -> Unit raise YamlError {
   self.remove_simple_key()
   self.decrease_flow_level()
   self.disallow_simple_key()
@@ -1865,7 +1852,7 @@ fn Lexer::decrease_flow_level(self : Lexer) -> Unit {
 fn Lexer::fetch_flow_collection_start(
   self : Lexer,
   tok : TokenType,
-) -> Unit raise LexError {
+) -> Unit raise YamlError {
   // The indicators '[' and '{' may start a simple key.
   self.save_simple_key()
   self.roll_one_col_indent()
@@ -1881,12 +1868,12 @@ fn Lexer::fetch_flow_collection_start(
 }
 
 ///|
-fn Lexer::increase_flow_level(self : Lexer) -> Unit raise LexError {
+fn Lexer::increase_flow_level(self : Lexer) -> Unit raise YamlError {
   self.simple_keys.push(SimpleKey::new(Marker::{ index: 0, line: 0, col: 0 }))
   self.flow_level = if self.flow_level < 0xFF {
     self.flow_level + 1
   } else {
-    raise LexError::LexError(
+    raise YamlError::YamlError(
       mark=self.get_marker(),
       info="recursion limit exceeded",
     )
@@ -1926,7 +1913,7 @@ fn Lexer::save_simple_key(self : Lexer) -> Unit {
 fn Lexer::fetch_document_indicator(
   self : Lexer,
   t : TokenType,
-) -> Unit raise LexError {
+) -> Unit raise YamlError {
   self.unroll_indent(-1)
   self.remove_simple_key()
   self.disallow_simple_key()
@@ -1936,7 +1923,7 @@ fn Lexer::fetch_document_indicator(
 }
 
 ///|
-fn Lexer::fetch_directive(self : Lexer) -> Unit raise LexError {
+fn Lexer::fetch_directive(self : Lexer) -> Unit raise YamlError {
   self.unroll_indent(-1)
   self.remove_simple_key()
   self.disallow_simple_key()
@@ -1945,7 +1932,7 @@ fn Lexer::fetch_directive(self : Lexer) -> Unit raise LexError {
 }
 
 ///|
-fn Lexer::scan_directive(self : Lexer) -> Token raise LexError {
+fn Lexer::scan_directive(self : Lexer) -> Token raise YamlError {
   let start_mark = self.get_marker()
   self.skip_non_blank()
   let name = self.scan_directive_name()
@@ -1966,7 +1953,7 @@ fn Lexer::scan_directive(self : Lexer) -> Token raise LexError {
         token_type: TokenType::TagDirective(handle="", prefix=""),
       }
 
-      // return Err(LexError::new(start_mark,
+      // return Err(YamlError::new(start_mark,
       //     "while scanning a directive, found unknown directive name"))
     }
   }
@@ -1976,7 +1963,7 @@ fn Lexer::scan_directive(self : Lexer) -> Token raise LexError {
     self.skip_linebreak()
     return tok
   } else {
-    raise LexError::LexError(
+    raise YamlError::YamlError(
       mark=start_mark,
       info="while scanning a directive, did not find expected comment or line break",
     )
@@ -1987,7 +1974,7 @@ fn Lexer::scan_directive(self : Lexer) -> Token raise LexError {
 fn Lexer::scan_tag_directive_value(
   self : Lexer,
   mark : Marker,
-) -> Token raise LexError {
+) -> Token raise YamlError {
   // Eat whitespaces.
   while self.look_char().is_blank() {
     self.skip_blank()
@@ -2006,7 +1993,7 @@ fn Lexer::scan_tag_directive_value(
       token_type: TokenType::TagDirective(handle~, prefix~),
     }
   } else {
-    raise LexError::LexError(
+    raise YamlError::YamlError(
       mark~,
       info="while scanning TAG, did not find expected whitespace or line break",
     )
@@ -2022,15 +2009,15 @@ fn Lexer::scan_tag_directive_value(
 fn Lexer::scan_tag_prefix(
   self : Lexer,
   start_mark : Marker,
-) -> String raise LexError {
+) -> String raise YamlError {
   let buf = StringBuilder::new()
   if self.look_char() == '!' {
     // If we have a local tag, insert and skip `!`.
     buf.write_char(self.char())
     self.skip_non_blank()
-  } else if self.char().is_tag_char() {
+  } else if !self.char().is_tag_char() {
     // Otherwise, check if the first global tag character is valid.
-    raise LexError::LexError(
+    raise YamlError::YamlError(
       mark=start_mark,
       info="invalid global tag character",
     )
@@ -2054,7 +2041,7 @@ fn Lexer::scan_tag_prefix(
 }
 
 ///|
-fn Lexer::scan_uri_escapes(self : Lexer, mark : Marker) -> Char raise LexError {
+fn Lexer::scan_uri_escapes(self : Lexer, mark : Marker) -> Char raise YamlError {
   let mut width = 0
   let mut code = 0
   while true {
@@ -2062,7 +2049,7 @@ fn Lexer::scan_uri_escapes(self : Lexer, mark : Marker) -> Char raise LexError {
     if !(self.char() == '%' &&
       self.buffer[1].is_hex() &&
       self.buffer[2].is_hex()) {
-      raise LexError::LexError(
+      raise YamlError::YamlError(
         mark~,
         info="while parsing a tag, did not find URI escaped octet",
       )
@@ -2075,7 +2062,7 @@ fn Lexer::scan_uri_escapes(self : Lexer, mark : Marker) -> Char raise LexError {
         _ if (octet & 0xF0) == 0xE0 => 3
         _ if (octet & 0xF8) == 0xF0 => 4
         _ =>
-          raise LexError::LexError(
+          raise YamlError::YamlError(
             mark~,
             info="while parsing a tag, found an incorrect leading UTF-8 octet",
           )
@@ -2083,7 +2070,7 @@ fn Lexer::scan_uri_escapes(self : Lexer, mark : Marker) -> Char raise LexError {
       code = octet
     } else {
       if (octet & 0xc0) != 0x80 {
-        raise LexError::LexError(
+        raise YamlError::YamlError(
           mark~,
           info="while parsing a tag, found an incorrect trailing UTF-8 octet",
         )
@@ -2099,7 +2086,7 @@ fn Lexer::scan_uri_escapes(self : Lexer, mark : Marker) -> Char raise LexError {
   match Int::to_char(code) {
     Some(ch) => ch
     None =>
-      raise LexError::LexError(
+      raise YamlError::YamlError(
         mark~,
         info="while parsing a tag, found an invalid UTF-8 codepoint",
       )
@@ -2111,10 +2098,10 @@ fn Lexer::scan_tag_handle(
   self : Lexer,
   directive : Bool,
   mark : Marker,
-) -> String raise LexError {
+) -> String raise YamlError {
   let buf = StringBuilder::new()
   if self.look_char() != '!' {
-    raise LexError::LexError(
+    raise YamlError::YamlError(
       mark~,
       info="while scanning a tag, did not find expected '!'",
     )
@@ -2125,35 +2112,34 @@ fn Lexer::scan_tag_handle(
     buf.write_char(self.char())
     self.skip_non_blank()
   }
-  let res = buf.to_string()
 
   // Check if the trailing character is '!' and copy it.
   if self.char() == '!' {
     buf.write_char(self.char())
     self.skip_non_blank()
-  } else if directive && res != "!" {
+  } else if directive && buf.to_string() != "!" {
     // It's either the '!' tag or not really a tag handle.  If it's a %TAG
     // directive, it's an error.  If it's a tag token, it must be a part of
     // URI.
-    raise LexError::LexError(
+    raise YamlError::YamlError(
       mark~,
       info="while parsing a tag directive, did not find expected '!'",
     )
   }
-  return res
+  return buf.to_string()
 }
 
 ///|
 fn Lexer::scan_version_directive_value(
   self : Lexer,
   mark : Marker,
-) -> Token raise LexError {
+) -> Token raise YamlError {
   while self.look_char().is_blank() {
     self.skip_blank()
   }
   let major = self.scan_version_directive_number(mark)
   if self.char() != '.' {
-    raise LexError::LexError(
+    raise YamlError::YamlError(
       mark~,
       info="while scanning a YAML directive, did not find expected digit or '.' character",
     )
@@ -2170,12 +2156,12 @@ fn Lexer::scan_version_directive_value(
 fn Lexer::scan_version_directive_number(
   self : Lexer,
   mark : Marker,
-) -> Int raise LexError {
+) -> Int raise YamlError {
   let mut val = 0
   let mut length = 0
   while self.look_char().to_digit() is Some(digit) {
     if length + 1 > 9 {
-      raise LexError::LexError(
+      raise YamlError::YamlError(
         mark~,
         info="while scanning a YAML directive, found extremely long version number",
       )
@@ -2185,7 +2171,7 @@ fn Lexer::scan_version_directive_number(
     self.skip_non_blank()
   }
   if length == 0 {
-    raise LexError::LexError(
+    raise YamlError::YamlError(
       mark~,
       info="while scanning a YAML directive, did not find expected version number",
     )
@@ -2194,21 +2180,21 @@ fn Lexer::scan_version_directive_number(
 }
 
 ///|
-fn Lexer::scan_directive_name(self : Lexer) -> String raise LexError {
+fn Lexer::scan_directive_name(self : Lexer) -> String raise YamlError {
   let start_mark = self.get_marker()
   let buf = StringBuilder::new()
-  while self.char().is_alpha() {
+  while self.look_char().is_alpha() {
     buf.write_char(self.char())
     self.skip_non_blank()
   }
   if buf.is_empty() {
-    raise LexError::LexError(
+    raise YamlError::YamlError(
       mark=start_mark,
       info="while scanning a directive, could not find expected directive name",
     )
   }
   if !self.char().is_blank_or_breakz() {
-    raise LexError::LexError(
+    raise YamlError::YamlError(
       mark=start_mark,
       info="while scanning a directive, found unexpected non-alphabetical character",
     )
@@ -2217,7 +2203,7 @@ fn Lexer::scan_directive_name(self : Lexer) -> String raise LexError {
 }
 
 ///|
-fn Lexer::fetch_stream_end(self : Lexer) -> Unit raise LexError {
+fn Lexer::fetch_stream_end(self : Lexer) -> Unit raise YamlError {
   // force new line
   if self.col != 0 {
     self.col = 0
@@ -2227,7 +2213,7 @@ fn Lexer::fetch_stream_end(self : Lexer) -> Unit raise LexError {
   // had. If one was required, however, that was an error and we must propagate it.
   for sk in self.simple_keys {
     if sk.required && sk.possible {
-      raise LexError::LexError(
+      raise YamlError::YamlError(
         mark=self.get_marker(),
         info="simple key expected",
       )
@@ -2244,10 +2230,13 @@ fn Lexer::fetch_stream_end(self : Lexer) -> Unit raise LexError {
 }
 
 ///|
-fn Lexer::remove_simple_key(self : Lexer) -> Unit raise LexError {
+fn Lexer::remove_simple_key(self : Lexer) -> Unit raise YamlError {
   let last = self.simple_keys.last().unwrap()
   if last.possible && last.required {
-    raise LexError::LexError(mark=self.get_marker(), info="simple key expected")
+    raise YamlError::YamlError(
+      mark=self.get_marker(),
+      info="simple key expected",
+    )
   }
   last.possible = false
 }
@@ -2282,13 +2271,13 @@ fn Lexer::unroll_indent(self : Lexer, col : Int) -> Unit {
 ///
 /// # Errors
 /// This function returns an error if one of the key we would stale was required to be a key.
-fn Lexer::stale_simple_keys(self : Lexer) -> Unit raise LexError {
+fn Lexer::stale_simple_keys(self : Lexer) -> Unit raise YamlError {
   for sk in self.simple_keys {
     if sk.possible &&
       self.flow_level == 0 &&
       (sk.mark.line < self.line || sk.mark.index + 1024 < self.index) {
       if sk.required {
-        raise LexError::LexError(
+        raise YamlError::YamlError(
           mark=self.get_marker(),
           info="simple key expect ':'",
         )
@@ -2304,7 +2293,7 @@ fn Lexer::stale_simple_keys(self : Lexer) -> Unit raise LexError {
 /// # Errors
 /// This function returns an error if a tabulation is encountered where there should not be
 /// one.
-fn Lexer::skip_to_next_token(self : Lexer) -> Unit raise LexError {
+fn Lexer::skip_to_next_token(self : Lexer) -> Unit raise YamlError {
   while true {
     match self.look_char() {
       // Tabs may not be used as indentation.
@@ -2319,7 +2308,7 @@ fn Lexer::skip_to_next_token(self : Lexer) -> Unit raise LexError {
         ignore(self.skip_ws_to_eol(SkipTabs::Yes))
         // If we have content on that line with a tab, return an error.
         if self.char().is_breakz() {
-          raise LexError::LexError(
+          raise YamlError::YamlError(
             mark=self.get_marker(),
             info="tabs disallowed within this context (block indentation)",
           )
@@ -2347,7 +2336,7 @@ fn Lexer::skip_to_next_token(self : Lexer) -> Unit raise LexError {
 fn Lexer::skip_ws_to_eol(
   self : Lexer,
   skip_tabs : SkipTabs,
-) -> SkipTabs raise LexError {
+) -> SkipTabs raise YamlError {
   let mut encountered_tab = false
   let mut has_onemore_whitespace = false
   while true {
@@ -2362,7 +2351,7 @@ fn Lexer::skip_ws_to_eol(
       }
       // YAML comments must be preceded by whitespace.
       '#' if !encountered_tab && !has_onemore_whitespace =>
-        raise LexError::LexError(
+        raise YamlError::YamlError(
           mark=self.get_marker(),
           info="comments must be separated from other tokens by whitespace",
         )
@@ -2382,7 +2371,7 @@ fn Lexer::is_within_block(self : Lexer) -> Bool {
 }
 
 ///|
-pub enum SkipTabs {
+priv enum SkipTabs {
   /// Skip all tabs as whitespace.
   Yes
   /// Don't skip any tab. Return from the function when encountering one.
@@ -2413,7 +2402,7 @@ fn SkipTabs::has_valid_yaml_ws(self : SkipTabs) -> Bool {
 /// Chomping, how final line breaks and trailing empty lines are interpreted.
 ///
 /// See YAML spec 8.1.1.2.
-pub enum Chomping {
+priv enum Chomping {
   /// The final line break and any trailing empty lines are excluded.
   Strip
   /// The final line break is preserved, but trailing empty lines are excluded.

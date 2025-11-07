@@ -4,41 +4,39 @@ package "myfreess/yaml"
 // Values
 
 // Errors
-pub suberror LexError {
-  LexError(mark~ : Marker, info~ : String)
+pub suberror YamlError {
+  YamlError(mark~ : Marker, info~ : String)
 }
-impl Show for LexError
+impl Show for YamlError
 
 // Types and methods
-pub enum Chomping {
-  Strip
-  Clip
-  Keep
+pub enum Event {
+  StreamStart
+  StreamEnd
+  DocumentStart
+  DocumentEnd
+  Alias(id~ : Int)
+  Scalar(value~ : String, style~ : TScalarStyle, id~ : Int, tag~ : Tag?)
+  SequenceStart(id~ : Int, tag~ : Tag?)
+  SequenceEnd
+  MappingStart(id~ : Int, tag~ : Tag?)
+  MappingEnd
 }
-impl Eq for Chomping
-
-type Lexer
-fn Lexer::fetch_more_tokens(Self) -> Unit raise LexError
-fn Lexer::fetch_next_token(Self) -> Unit raise LexError
-fn Lexer::new(StringView) -> Self
-fn Lexer::next(Self) -> Token?
-fn Lexer::next_token(Self) -> Token? raise LexError
+impl Eq for Event
+impl Show for Event
 
 pub struct Marker {
   index : Int
   line : Int
   col : Int
 }
+impl Eq for Marker
 impl Show for Marker
 
-type SimpleKey
-
-pub enum SkipTabs {
-  Yes
-  No
-  Result(encountered_tab~ : Bool, has_onemore_whitespace~ : Bool)
-}
-impl Eq for SkipTabs
+type Parser
+fn Parser::keep_tags(Self, Bool) -> Unit
+fn[R : MarkedEventReceiver] Parser::load(Self, R, Bool) -> Unit raise YamlError
+fn Parser::new(StringView) -> Self
 
 pub enum TScalarStyle {
   Plain
@@ -50,53 +48,37 @@ pub enum TScalarStyle {
 impl Eq for TScalarStyle
 impl Show for TScalarStyle
 
-pub struct Token {
-  marker : Marker
-  token_type : TokenType
+pub struct Tag {
+  handle : String
+  suffix : String
 }
-impl Show for Token
-
-pub enum TokenType {
-  StreamStart
-  StreamEnd
-  VersionDirective(major~ : Int, minor~ : Int)
-  TagDirective(handle~ : String, prefix~ : String)
-  DocumentStart
-  DocumentEnd
-  BlockSequenceStart
-  BlockMappingStart
-  BlockEnd
-  FlowSequenceStart
-  FlowSequenceEnd
-  FlowMappingStart
-  FlowMappingEnd
-  BlockEntry
-  FlowEntry
-  Key
-  Value
-  Alias(String)
-  Anchor(String)
-  Tag(handle~ : String, suffix~ : String)
-  Scalar(TScalarStyle, String)
-}
-impl Eq for TokenType
-impl Show for TokenType
+impl Eq for Tag
+impl Show for Tag
 
 pub(all) enum Yaml {
-  Real(String)
+  Real(Double, repr~ : String)
   Integer(Int64)
   String(String)
   Boolean(Bool)
   Array(Array[Yaml])
   Map(Map[String, Yaml])
-  Alias(UInt)
   Null
   BadValue
 }
+fn Yaml::load_from_parser(Parser) -> Array[Self] raise YamlError
+fn Yaml::load_from_string(String) -> Array[Self] raise YamlError
 impl Eq for Yaml
 impl Show for Yaml
+impl ToJson for Yaml
 
 // Type aliases
 
 // Traits
+pub trait EventReceiver {
+  on_event(Self, Event) -> Unit
+}
+
+pub trait MarkedEventReceiver {
+  on_event(Self, Event, Marker) -> Unit
+}
 

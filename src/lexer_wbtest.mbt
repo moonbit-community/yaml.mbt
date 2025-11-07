@@ -701,3 +701,350 @@ test "lexer cr" {
   inspect(p.next_t(), content="StreamEnd")
   inspect(p.next(), content="None")
 }
+
+///|
+test "keep tags across multiple documents" {
+  let source =
+    #|%YAML 1.1
+    #|%TAG !t! tag:test,2024:
+    #|--- !t!1 &1
+    #|foo: "bar"
+    #|--- !t!2 &2
+    #|baz: "qux"
+  let p = Lexer::new(source)
+  inspect(p.next_t(), content="StreamStart")
+  inspect(p.next_t(), content="VersionDirective(major=1, minor=1)")
+  inspect(
+    p.next_t(),
+    content=(
+      #|TagDirective(handle="!t!", prefix="tag:test,2024:")
+    ),
+  )
+  inspect(p.next_t(), content="DocumentStart")
+  inspect(
+    p.next_t(),
+    content=(
+      #|Tag(handle="!t!", suffix="1")
+    ),
+  )
+  inspect(
+    p.next_t(),
+    content=(
+      #|Anchor("1")
+    ),
+  )
+  inspect(p.next_t(), content="BlockMappingStart")
+  inspect(p.next_t(), content="Key")
+  inspect(
+    p.next_t(),
+    content=(
+      #|Scalar(Plain, "foo")
+    ),
+  )
+  inspect(p.next_t(), content="Value")
+  inspect(
+    p.next_t(),
+    content=(
+      #|Scalar(DoubleQuoted, "bar")
+    ),
+  )
+  inspect(p.next_t(), content="BlockEnd")
+  inspect(p.next_t(), content="DocumentStart")
+  inspect(
+    p.next_t(),
+    content=(
+      #|Tag(handle="!t!", suffix="2")
+    ),
+  )
+  inspect(
+    p.next_t(),
+    content=(
+      #|Anchor("2")
+    ),
+  )
+  inspect(p.next_t(), content="BlockMappingStart")
+  inspect(p.next_t(), content="Key")
+  inspect(
+    p.next_t(),
+    content=(
+      #|Scalar(Plain, "baz")
+    ),
+  )
+  inspect(p.next_t(), content="Value")
+  inspect(
+    p.next_t(),
+    content=(
+      #|Scalar(DoubleQuoted, "qux")
+    ),
+  )
+  inspect(p.next_t(), content="BlockEnd")
+  inspect(p.next_t(), content="StreamEnd")
+  inspect(p.next(), content="None")
+}
+
+///|
+test "large block scalar indent" {
+  let source =
+    #|a: |-
+    #|                  a
+    #|                      b
+  let p = Lexer::new(source)
+  inspect(p.next_t(), content="StreamStart")
+  inspect(p.next_t(), content="BlockMappingStart")
+  inspect(p.next_t(), content="Key")
+  inspect(
+    p.next_t(),
+    content=(
+      #|Scalar(Plain, "a")
+    ),
+  )
+  inspect(p.next_t(), content="Value")
+  inspect(
+    p.next_t(),
+    content=(
+      #|Scalar(Literal, "a\n    b")
+    ),
+  )
+  inspect(p.next_t(), content="BlockEnd")
+  inspect(p.next_t(), content="StreamEnd")
+  inspect(p.next(), content="None")
+}
+
+///|
+test "tag directives" {
+  let source =
+    #|- !!str 0
+    #|- !!int 100
+    #|- !!float 2
+    #|- !!null ~
+    #|- !!bool true
+    #|- !!bool false
+  let p = Lexer::new(source)
+  inspect(p.next_t(), content="StreamStart")
+  inspect(p.next_t(), content="BlockSequenceStart")
+  inspect(p.next_t(), content="BlockEntry")
+  inspect(
+    p.next_t(),
+    content=(
+      #|Tag(handle="!!", suffix="str")
+    ),
+  )
+  inspect(
+    p.next_t(),
+    content=(
+      #|Scalar(Plain, "0")
+    ),
+  )
+  inspect(p.next_t(), content="BlockEntry")
+  inspect(
+    p.next_t(),
+    content=(
+      #|Tag(handle="!!", suffix="int")
+    ),
+  )
+  inspect(
+    p.next_t(),
+    content=(
+      #|Scalar(Plain, "100")
+    ),
+  )
+  inspect(p.next_t(), content="BlockEntry")
+  inspect(
+    p.next_t(),
+    content=(
+      #|Tag(handle="!!", suffix="float")
+    ),
+  )
+  inspect(
+    p.next_t(),
+    content=(
+      #|Scalar(Plain, "2")
+    ),
+  )
+  inspect(p.next_t(), content="BlockEntry")
+  inspect(
+    p.next_t(),
+    content=(
+      #|Tag(handle="!!", suffix="null")
+    ),
+  )
+  inspect(
+    p.next_t(),
+    content=(
+      #|Scalar(Plain, "~")
+    ),
+  )
+  inspect(p.next_t(), content="BlockEntry")
+  inspect(
+    p.next_t(),
+    content=(
+      #|Tag(handle="!!", suffix="bool")
+    ),
+  )
+  inspect(
+    p.next_t(),
+    content=(
+      #|Scalar(Plain, "true")
+    ),
+  )
+  inspect(p.next_t(), content="BlockEntry")
+  inspect(
+    p.next_t(),
+    content=(
+      #|Tag(handle="!!", suffix="bool")
+    ),
+  )
+  inspect(
+    p.next_t(),
+    content=(
+      #|Scalar(Plain, "false")
+    ),
+  )
+  inspect(p.next_t(), content="BlockEnd")
+  inspect(p.next_t(), content="StreamEnd")
+  inspect(p.next(), content="None")
+}
+
+///|
+test "looks like float but actually string" {
+  let buf = StringBuilder::new(size_hint=400)
+  let bases = ["nan", "NAN", "NaN", "inf", "infinity", "Infinity"]
+  for base in bases {
+    buf.write_string("- +\{base}\n")
+    buf.write_string("- -\{base}\n")
+    buf.write_string("- \{base}\n")
+  }
+  let source = buf.to_string()
+  let p = Lexer::new(source)
+  inspect(p.next_t(), content="StreamStart")
+  inspect(p.next_t(), content="BlockSequenceStart")
+  inspect(p.next_t(), content="BlockEntry")
+  inspect(
+    p.next_t(),
+    content=(
+      #|Scalar(Plain, "+nan")
+    ),
+  )
+  inspect(p.next_t(), content="BlockEntry")
+  inspect(
+    p.next_t(),
+    content=(
+      #|Scalar(Plain, "-nan")
+    ),
+  )
+  inspect(p.next_t(), content="BlockEntry")
+  inspect(
+    p.next_t(),
+    content=(
+      #|Scalar(Plain, "nan")
+    ),
+  )
+  inspect(p.next_t(), content="BlockEntry")
+  inspect(
+    p.next_t(),
+    content=(
+      #|Scalar(Plain, "+NAN")
+    ),
+  )
+  inspect(p.next_t(), content="BlockEntry")
+  inspect(
+    p.next_t(),
+    content=(
+      #|Scalar(Plain, "-NAN")
+    ),
+  )
+  inspect(p.next_t(), content="BlockEntry")
+  inspect(
+    p.next_t(),
+    content=(
+      #|Scalar(Plain, "NAN")
+    ),
+  )
+  inspect(p.next_t(), content="BlockEntry")
+  inspect(
+    p.next_t(),
+    content=(
+      #|Scalar(Plain, "+NaN")
+    ),
+  )
+  inspect(p.next_t(), content="BlockEntry")
+  inspect(
+    p.next_t(),
+    content=(
+      #|Scalar(Plain, "-NaN")
+    ),
+  )
+  inspect(p.next_t(), content="BlockEntry")
+  inspect(
+    p.next_t(),
+    content=(
+      #|Scalar(Plain, "NaN")
+    ),
+  )
+  inspect(p.next_t(), content="BlockEntry")
+  inspect(
+    p.next_t(),
+    content=(
+      #|Scalar(Plain, "+inf")
+    ),
+  )
+  inspect(p.next_t(), content="BlockEntry")
+  inspect(
+    p.next_t(),
+    content=(
+      #|Scalar(Plain, "-inf")
+    ),
+  )
+  inspect(p.next_t(), content="BlockEntry")
+  inspect(
+    p.next_t(),
+    content=(
+      #|Scalar(Plain, "inf")
+    ),
+  )
+  inspect(p.next_t(), content="BlockEntry")
+  inspect(
+    p.next_t(),
+    content=(
+      #|Scalar(Plain, "+infinity")
+    ),
+  )
+  inspect(p.next_t(), content="BlockEntry")
+  inspect(
+    p.next_t(),
+    content=(
+      #|Scalar(Plain, "-infinity")
+    ),
+  )
+  inspect(p.next_t(), content="BlockEntry")
+  inspect(
+    p.next_t(),
+    content=(
+      #|Scalar(Plain, "infinity")
+    ),
+  )
+  inspect(p.next_t(), content="BlockEntry")
+  inspect(
+    p.next_t(),
+    content=(
+      #|Scalar(Plain, "+Infinity")
+    ),
+  )
+  inspect(p.next_t(), content="BlockEntry")
+  inspect(
+    p.next_t(),
+    content=(
+      #|Scalar(Plain, "-Infinity")
+    ),
+  )
+  inspect(p.next_t(), content="BlockEntry")
+  inspect(
+    p.next_t(),
+    content=(
+      #|Scalar(Plain, "Infinity")
+    ),
+  )
+  inspect(p.next_t(), content="BlockEnd")
+  inspect(p.next_t(), content="StreamEnd")
+  inspect(p.next(), content="None")
+}
