@@ -1,3 +1,6 @@
 {
-    "warn-list": "-1"
+    "warn-list": "-1",
+    "test-import": [
+        "moonbitlang/x/fs"
+    ]
 }

@@ -443,3 +443,31 @@ test "nominal float parse" {
     }
   }
 }
+
+///|
+test "OpenAI OpenAPI" (t : @test.Test) {
+  let source = @fs.read_file_to_string("misc/openai_openapi.yml")
+  let docs = Yaml::load_from_string(source)
+  assert_eq(docs.length(), 1)
+  guard docs[0] is Yaml::Map(yaml_map) else {
+    fail("\{t.name()}: expect a YAML map")
+  }
+  @json.inspect(yaml_map.keys().collect(), content=[
+    "openapi", "info", "servers", "security", "tags", "paths", "webhooks", "components",
+    "x-oaiMeta",
+  ])
+  @json.inspect(yaml_map["servers"], content=[
+    { "url": "https://api.openai.com/v1" },
+  ])
+  @json.inspect(yaml_map["info"], content={
+    "title": "OpenAI API",
+    "description": "The OpenAI REST API. Please see https://platform.openai.com/docs/api-reference for more details.",
+    "version": "2.3.0",
+    "termsOfService": "https://openai.com/policies/terms-of-use",
+    "contact": { "name": "OpenAI Support", "url": "https://help.openai.com/" },
+    "license": {
+      "name": "MIT",
+      "url": "https://github.com/openai/openai-openapi/blob/master/LICENSE",
+    },
+  })
+}
