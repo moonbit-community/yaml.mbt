@@ -313,7 +313,10 @@ fn Lexer::skip_non_blank(self : Lexer) -> Unit {
 ///|
 /// Consume the next n characters. It is assumed none of the next characters are blanks.
 fn Lexer::skip_n_non_blank(self : Lexer, n : Int) -> Unit {
-  ignore(self.buffer.drain(start=0, len=n))
+  // ignore(self.buffer.drain(start=0, len=n))
+  for _ in 0..<n {
+    ignore(self.buffer.pop_front())
+  }
   self.index += n
   self.col += n
   self.leading_whitespace = false
