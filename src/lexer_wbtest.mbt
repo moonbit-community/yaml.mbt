@@ -1048,3 +1048,29 @@ test "looks like float but actually string" {
   inspect(p.next_t(), content="StreamEnd")
   inspect(p.next(), content="None")
 }
+
+///|
+test "testcase from OpenAI OpenAPI" {
+  let source =
+    #|example: '[''This is a test.'']'
+  let p = Lexer::new(source)
+  inspect(p.next_t(), content="StreamStart")
+  inspect(p.next_t(), content="BlockMappingStart")
+  inspect(p.next_t(), content="Key")
+  inspect(
+    p.next_t(),
+    content=(
+      #|Scalar(Plain, "example")
+    ),
+  )
+  inspect(p.next_t(), content="Value")
+  inspect(
+    p.next_t(),
+    content=(
+      #|Scalar(SingleQuoted, "['This is a test.']")
+    ),
+  )
+  inspect(p.next_t(), content="BlockEnd")
+  inspect(p.next_t(), content="StreamEnd")
+  inspect(p.next(), content="None")
+}
