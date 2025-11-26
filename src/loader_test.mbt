@@ -445,13 +445,11 @@ test "nominal float parse" {
 }
 
 ///|
-test "OpenAI OpenAPI" (t : @test.Test) {
+test "OpenAI OpenAPI" {
   let source = @fs.read_file_to_string("misc/openai_openapi.yml")
   let docs = Yaml::load_from_string(source)
   assert_eq(docs.length(), 1)
-  guard docs[0] is Yaml::Map(yaml_map) else {
-    fail("\{t.name()}: expect a YAML map")
-  }
+  guard docs[0] is Yaml::Map(yaml_map) else { fail("expect a YAML map") }
   @json.inspect(yaml_map.keys().collect(), content=[
     "openapi", "info", "servers", "security", "tags", "paths", "webhooks", "components",
     "x-oaiMeta",
