@@ -1,5 +1,5 @@
 {
-  "name": "myfreess/yaml",
+  "name": "moonbit-community/yaml",
   "version": "0.0.1",
   "deps": {
     "moonbitlang/x": "0.4.37"
