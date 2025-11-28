@@ -90,8 +90,8 @@ pub fn Parser::keep_tags(self : Parser, value : Bool) -> Unit {
 ///|
 /// Try to load the next event and return it, but do not consuming it from `self`.
 ///
-/// Any subsequent call to [`Parser::peek`] will return the same value, until a call to
-/// [`Iterator::next`] or [`Parser::load`].
+/// Any subsequent call to `Parser::peek` will return the same value, until a call to
+/// `Iterator::next` or `Parser::load`.
 /// # Errors
 /// Returns `YamlError` when loading the next event fails.
 fn Parser::peek(self : Parser) -> (Event, Marker) raise YamlError {
