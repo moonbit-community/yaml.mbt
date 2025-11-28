@@ -452,3 +452,142 @@ test "testcase from OpenAI OpenAPI" {
   assert_eq(docs.length(), 1)
   @json.inspect(docs[0], content={ "example": "['This is a test.']" })
 }
+
+///|
+fn visual_to_raw(yaml : String) -> String {
+  let buf = StringBuilder::new(size_hint=yaml.length() * 2)
+  loop yaml[:] {
+    [] => buf.to_string()
+    ['∎', '\n', .. rest] | ['—', .. rest] | ['↵', .. rest] =>
+      continue rest
+    ['␣', .. rest] => {
+      buf.write_char(' ')
+      continue rest
+    }
+    ['»', .. rest] => {
+      buf.write_char('\t')
+      continue rest
+    }
+    ['←', .. rest] => {
+      buf.write_char('\r')
+      continue rest
+    }
+    ['⇔', .. rest] => {
+      buf.write_char('\u{FEFF}')
+      continue rest
+    }
+    [ch, .. rest] => {
+      buf.write_char(ch)
+      continue rest
+    }
+  }
+}
+
+///|
+test "26DV: Whitespace around colon in mappings" {
+  let source =
+    #|"top1" :␣
+    #|  "key1" : &alias1 scalar1
+    #|'top2' :␣
+    #|  'key2' : &alias2 scalar2
+    #|top3: &node3␣
+    #|  *alias1 : scalar3
+    #|top4:␣
+    #|  *alias2 : scalar4
+    #|top5   :␣␣␣␣
+    #|  scalar5
+    #|top6:␣
+    #|  &anchor6 'key6' : scalar6
+  let docs = Yaml::load_from_string(visual_to_raw(source))
+  @json.inspect(docs, content=[
+    {
+      "top1": { "key1": "scalar1" },
+      "top2": { "key2": "scalar2" },
+      "top3": { "scalar1": "scalar3" },
+      "top4": { "scalar2": "scalar4" },
+      "top5": "scalar5",
+      "top6": { "key6": "scalar6" },
+    },
+  ])
+}
+
+///|
+test "ZH7C: Anchors in Mapping" {
+  let source =
+    #|&a a: b
+    #|c: &d d
+  let docs = Yaml::load_from_string(source)
+  assert_eq(docs.length(), 1)
+  @json.inspect(docs[0], content={ "a": "b", "c": "d" })
+}
+
+///|
+test "Z9M4: Global Tag Prefix" {
+  let source =
+    #|%TAG !e! tag:example.com,2000:app/
+    #|---
+    #|- !e!foo "bar"
+  let docs = Yaml::load_from_string(source)
+  assert_eq(docs.length(), 1)
+  @json.inspect(docs[0], content=["bar"])
+}
+
+///|
+test "M6YH: Block sequence indentation" {
+  let source =
+    #|- |
+    #| x
+    #|-
+    #| foo: bar
+    #|-
+    #| - 42
+  let docs = Yaml::load_from_string(source)
+  assert_eq(docs.length(), 1)
+  @json.inspect(docs[0], content=["x\n", { "foo": "bar" }, [42]])
+}
+
+///|
+test "LQ27" {
+  let source =
+    #|"implicit block key" : [
+    #|  "implicit flow key" : value,
+    #| ]
+  let docs = Yaml::load_from_string(source)
+  assert_eq(docs.length(), 1)
+  @json.inspect(docs[0], content={
+    "implicit block key": [{ "implicit flow key": "value" }],
+  })
+}
+
+///|
+test "HMQ5: Node Properties" {
+  let source =
+    #|!!str &a1 "foo":
+    #|  !!str bar
+    #|&a2 baz : *a1
+  let docs = Yaml::load_from_string(source)
+  assert_eq(docs.length(), 1)
+  @json.inspect(docs[0], content={ "foo": "bar", "baz": "foo" })
+}
+
+///|
+test "G4RS: Quoted Scalars" {
+  let source =
+    #|unicode: "Sosa did fine.\u263A"
+    #|control: "\b1998\t1999\t2000\n"
+    #|hex esc: "\x0d\x0a is \r\n"
+    #|
+    #|single: '"Howdy!" he cried.'
+    #|quoted: ' # Not a ''comment''.'
+    #|tie-fighter: '|\-*-/|'
+  let docs = Yaml::load_from_string(source)
+  assert_eq(docs.length(), 1)
+  @json.inspect(docs[0], content={
+    "unicode": "Sosa did fine.☺",
+    "control": "\b1998\t1999\t2000\n",
+    "hex esc": "\r\n is \u0013\n",
+    "single": "\"Howdy!\" he cried.",
+    "quoted": " # Not a 'comment'.",
+    "tie-fighter": "|\\-*-/|",
+  })
+}

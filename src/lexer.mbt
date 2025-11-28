@@ -1024,9 +1024,9 @@ fn Lexer::resolve_flow_scalar_escape_sequence(
   // Consume an arbitrary escape code.
   if code_length > 0 {
     self.lookahead(code_length)
-    let mut value : Int = 32
+    let mut value : Int = 0
     for i in 0..<code_length {
-      if self.buffer[i].is_hex() {
+      if !self.buffer[i].is_hex() {
         raise YamlError::YamlError(
           mark=start_mark,
           info="while parsing a quoted scalar, did not find expected hexadecimal number",
