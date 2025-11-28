@@ -40,28 +40,28 @@ fn Event::empty_scalar_with_anchor(anchor : Int, tag : Tag?) -> Event {
 ///|
 /// Trait to be implemented in order to use the low-level parsing API.
 ///
-/// The low-level parsing API is event-based (a push parser), calling [`EventReceiver::on_event`]
-/// for each YAML [`Event`] that occurs.
-/// The [`EventReceiver`] trait only receives events. In order to receive both events and their
-/// location in the source, use [`MarkedEventReceiver`]. Note that [`EventReceiver`]s implement
-/// [`MarkedEventReceiver`] automatically.
+/// The low-level parsing API is event-based (a push parser), calling `EventReceiver::on_event`
+/// for each YAML `Event` that occurs.
+/// The `EventReceiver` trait only receives events. In order to receive both events and their
+/// location in the source, use `MarkedEventReceiver`. Note that `EventReceiver`s implement
+/// `MarkedEventReceiver` automatically.
 ///
 /// # Event hierarchy
-/// The event stream starts with an [`Event::StreamStart`] event followed by an
-/// [`Event::DocumentStart`] event. If the YAML document starts with a mapping (an object), an
-/// [`Event::MappingStart`] event is emitted. If it starts with a sequence (an array), an
-/// [`Event::SequenceStart`] event is emitted. Otherwise, an [`Event::Scalar`] event is emitted.
+/// The event stream starts with an `Event::StreamStart` event followed by an
+/// `Event::DocumentStart` event. If the YAML document starts with a mapping (an object), an
+/// `Event::MappingStart` event is emitted. If it starts with a sequence (an array), an
+/// `Event::SequenceStart` event is emitted. Otherwise, an `Event::Scalar` event is emitted.
 ///
 /// In a mapping, key-values are sent as consecutive events. The first event after an
-/// [`Event::MappingStart`] will be the key, and following its value. If the mapping contains no
+/// `Event::MappingStart` will be the key, and following its value. If the mapping contains no
 /// sub-mapping or sub-sequence, then even events (starting from 0) will always be keys and odd
-/// ones will always be values. The mapping ends when an [`Event::MappingEnd`] event is received.
+/// ones will always be values. The mapping ends when an `Event::MappingEnd` event is received.
 ///
-/// In a sequence, values are sent consecutively until the [`Event::SequenceEnd`] event.
+/// In a sequence, values are sent consecutively until the `Event::SequenceEnd` event.
 ///
-/// If a value is a sub-mapping or a sub-sequence, an [`Event::MappingStart`] or
-/// [`Event::SequenceStart`] event will be sent respectively. Following events until the associated
-/// [`Event::MappingStart`] or [`Event::SequenceEnd`] (beware of nested mappings or sequences) will
+/// If a value is a sub-mapping or a sub-sequence, an `Event::MappingStart` or
+/// `Event::SequenceStart` event will be sent respectively. Following events until the associated
+/// `Event::MappingStart` or `Event::SequenceEnd` (beware of nested mappings or sequences) will
 /// be part of the value and not another key-value pair or element in the sequence.
 ///
 /// For instance, the following yaml:
