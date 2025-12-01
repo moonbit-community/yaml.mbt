@@ -123,7 +123,9 @@ pub fn Yaml::load_from_parser(parser : Parser) -> Array[Yaml] raise YamlError {
 }
 
 ///|
-pub fn Yaml::load_from_string(source : String) -> Array[Yaml] raise YamlError {
+pub fn Yaml::load_from_string(
+  source : StringView,
+) -> Array[Yaml] raise YamlError {
   let parser = Parser::new(source)
   Yaml::load_from_parser(parser)
 }

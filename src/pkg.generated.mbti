@@ -7,7 +7,7 @@ package "moonbit-community/yaml"
 pub suberror YamlError {
   YamlError(mark~ : Marker, info~ : String)
 }
-impl Show for YamlError
+pub impl Show for YamlError
 
 // Types and methods
 pub enum Event {
@@ -22,21 +22,21 @@ pub enum Event {
   MappingStart(id~ : Int, tag~ : Tag?)
   MappingEnd
 }
-impl Eq for Event
-impl Show for Event
+pub impl Eq for Event
+pub impl Show for Event
 
 pub struct Marker {
   index : Int
   line : Int
   col : Int
 }
-impl Eq for Marker
-impl Show for Marker
+pub impl Eq for Marker
+pub impl Show for Marker
 
 type Parser
-fn Parser::keep_tags(Self, Bool) -> Unit
-fn[R : MarkedEventReceiver] Parser::load(Self, R, Bool) -> Unit raise YamlError
-fn Parser::new(StringView) -> Self
+pub fn Parser::keep_tags(Self, Bool) -> Unit
+pub fn[R : MarkedEventReceiver] Parser::load(Self, R, Bool) -> Unit raise YamlError
+pub fn Parser::new(StringView) -> Self
 
 pub enum TScalarStyle {
   Plain
@@ -45,15 +45,15 @@ pub enum TScalarStyle {
   Literal
   Folded
 }
-impl Eq for TScalarStyle
-impl Show for TScalarStyle
+pub impl Eq for TScalarStyle
+pub impl Show for TScalarStyle
 
 pub struct Tag {
   handle : String
   suffix : String
 }
-impl Eq for Tag
-impl Show for Tag
+pub impl Eq for Tag
+pub impl Show for Tag
 
 pub(all) enum Yaml {
   Real(Double, repr~ : String)
@@ -65,11 +65,11 @@ pub(all) enum Yaml {
   Null
   BadValue
 }
-fn Yaml::load_from_parser(Parser) -> Array[Self] raise YamlError
-fn Yaml::load_from_string(String) -> Array[Self] raise YamlError
-impl Eq for Yaml
-impl Show for Yaml
-impl ToJson for Yaml
+pub fn Yaml::load_from_parser(Parser) -> Array[Self] raise YamlError
+pub fn Yaml::load_from_string(StringView) -> Array[Self] raise YamlError
+pub impl Eq for Yaml
+pub impl Show for Yaml
+pub impl ToJson for Yaml
 
 // Type aliases
 
