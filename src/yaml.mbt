@@ -262,3 +262,380 @@ fn YamlLoader::insert_new_node(
     }
   }
 }
+
+///|
+/// The YAML serializer.
+///
+/// This is a simplified emitter that matches the parser features supported by
+/// this package.
+///
+/// # Example
+/// ```mbt nocheck
+/// let input = "a: b\nc: d"
+/// let docs = Yaml::load_from_string(input)
+/// let emitter = YamlEmitter::new()
+/// emitter.dump(docs[0])
+/// let output = emitter.to_string()
+/// // output == "---\na: b\nc: d"
+/// ```
+struct YamlEmitter {
+  writer : StringBuilder
+  best_indent : Int
+  mut compact : Bool
+  mut level : Int
+  mut multiline_strings : Bool
+}
+
+///|
+/// Create a new emitter serializing into `writer`.
+pub fn YamlEmitter::new(
+  writer? : StringBuilder = StringBuilder::new(),
+) -> YamlEmitter {
+  YamlEmitter::{
+    writer,
+    best_indent: 2,
+    compact: true,
+    level: -1,
+    multiline_strings: false,
+  }
+}
+
+///|
+/// Set "compact inline notation" on or off for block sequences and mappings.
+///
+/// In this form, blocks cannot have any properties (such as anchors or tags),
+/// which should be OK, because this emitter doesn't emit those anyways.
+pub fn YamlEmitter::compact(self : YamlEmitter, compact : Bool) -> Unit {
+  self.compact = compact
+}
+
+///|
+/// Render strings containing multiple lines in literal block style.
+///
+/// # Example
+/// ```mbt nocheck
+/// let input = "{foo: \"bar!\\nbar!\", baz: 42}"
+/// let parsed = Yaml::load_from_string(input)
+/// let emitter = YamlEmitter::new()
+/// emitter.multiline_strings(true)
+/// emitter.dump(parsed[0])
+/// let output = emitter.to_string()
+/// // output is:
+/// // ---
+/// // foo: |-
+/// //   bar!
+/// //   bar!
+/// // baz: 42
+/// ```
+pub fn YamlEmitter::multiline_strings(
+  self : YamlEmitter,
+  multiline_strings : Bool,
+) -> Unit {
+  self.multiline_strings = multiline_strings
+}
+
+///|
+/// Dump a YAML document into the internal buffer.
+pub fn YamlEmitter::dump(self : YamlEmitter, doc : Yaml) -> Unit {
+  self.writer.write_string("---")
+  self.writer.write_char('\n')
+  self.level = -1
+  self.emit_node(doc)
+}
+
+///|
+/// Get the current emitted output as a string.
+pub fn YamlEmitter::to_string(self : YamlEmitter) -> String {
+  self.writer.to_string()
+}
+
+///|
+/// Convenience helper to dump a `Yaml` value into a string using default settings.
+pub fn Yaml::dump(self : Yaml) -> String {
+  let emitter = YamlEmitter::new()
+  emitter.dump(self)
+  emitter.to_string()
+}
+
+///|
+fn YamlEmitter::write_indent(self : YamlEmitter) -> Unit {
+  if self.level <= 0 {
+    return
+  }
+  for _ in 0..<self.level {
+    for _ in 0..<self.best_indent {
+      self.writer.write_char(' ')
+    }
+  }
+}
+
+///|
+fn YamlEmitter::emit_node(self : YamlEmitter, node : Yaml) -> Unit {
+  match node {
+    Array(values) => self.emit_array(values)
+    Map(values) => self.emit_map(values)
+    String(value) =>
+      if self.multiline_strings &&
+        value.contains_char('\n') &&
+        is_valid_literal_block_scalar(value) {
+        self.emit_literal_block(value)
+      } else if need_quotes(value) {
+        escape_str(self.writer, value)
+      } else {
+        self.writer.write_string(value)
+      }
+    Boolean(value) =>
+      if value {
+        self.writer.write_string("true")
+      } else {
+        self.writer.write_string("false")
+      }
+    Integer(value) => self.writer.write_string(value.to_string())
+    Real(value, repr~) =>
+      if repr.is_empty() {
+        self.writer.write_string(value.to_string())
+      } else {
+        self.writer.write_string(repr)
+      }
+    Null | BadValue => self.writer.write_char('~')
+  }
+}
+
+///|
+fn YamlEmitter::emit_literal_block(self : YamlEmitter, value : String) -> Unit {
+  let len = value.length()
+  let ends_with_newline = len > 0 && value[len - 1] == ('\n' : UInt16)
+  if ends_with_newline {
+    self.writer.write_char('|')
+  } else {
+    self.writer.write_string("|-")
+  }
+  self.level += 1
+  let lines = value.split("\n").to_array()
+  if ends_with_newline && !lines.is_empty() && lines.last().unwrap().is_empty() {
+    ignore(lines.pop())
+  }
+  for line in lines {
+    self.writer.write_char('\n')
+    self.write_indent()
+    self.writer.write_view(line)
+  }
+  self.level -= 1
+}
+
+///|
+fn YamlEmitter::emit_array(self : YamlEmitter, values : Array[Yaml]) -> Unit {
+  if values.is_empty() {
+    self.writer.write_string("[]")
+  } else {
+    self.level += 1
+    for index, value in values {
+      if index > 0 {
+        self.writer.write_char('\n')
+        self.write_indent()
+      }
+      self.writer.write_char('-')
+      self.emit_val(true, value)
+    }
+    self.level -= 1
+  }
+}
+
+///|
+fn YamlEmitter::emit_map(
+  self : YamlEmitter,
+  values : Map[String, Yaml],
+) -> Unit {
+  if values.is_empty() {
+    self.writer.write_string("{}")
+  } else {
+    self.level += 1
+    values.eachi((index, key, value) => {
+      if index > 0 {
+        self.writer.write_char('\n')
+        self.write_indent()
+      }
+      self.emit_node(Yaml::String(key))
+      self.writer.write_char(':')
+      self.emit_val(false, value)
+    })
+    self.level -= 1
+  }
+}
+
+///|
+/// Emit a YAML as a mapping or sequence value, following ':' or '-'.
+///
+/// If `inline` is true, the preceding characters are distinct and short
+/// enough to respect the compact flag.
+fn YamlEmitter::emit_val(
+  self : YamlEmitter,
+  inline : Bool,
+  value : Yaml,
+) -> Unit {
+  match value {
+    Array(values) => {
+      if (inline && self.compact) || values.is_empty() {
+        self.writer.write_char(' ')
+      } else {
+        self.writer.write_char('\n')
+        self.level += 1
+        self.write_indent()
+        self.level -= 1
+      }
+      self.emit_array(values)
+    }
+    Map(values) => {
+      if (inline && self.compact) || values.is_empty() {
+        self.writer.write_char(' ')
+      } else {
+        self.writer.write_char('\n')
+        self.level += 1
+        self.write_indent()
+        self.level -= 1
+      }
+      self.emit_map(values)
+    }
+    _ => {
+      self.writer.write_char(' ')
+      self.emit_node(value)
+    }
+  }
+}
+
+///|
+fn escape_str(writer : StringBuilder, value : String) -> Unit {
+  writer.write_char('"')
+  for ch in value {
+    match ch {
+      '"' => writer.write_string("\\\"")
+      '\\' => writer.write_string("\\\\")
+      '\u{0008}' => writer.write_string("\\b")
+      '\t' => writer.write_string("\\t")
+      '\n' => writer.write_string("\\n")
+      '\u{000c}' => writer.write_string("\\f")
+      '\r' => writer.write_string("\\r")
+      _ => {
+        let code = ch.to_int()
+        if code <= 0x1f || code == 0x7f {
+          write_hex_escape(writer, code)
+        } else {
+          writer.write_char(ch)
+        }
+      }
+    }
+  }
+  writer.write_char('"')
+}
+
+///|
+fn write_hex_escape(writer : StringBuilder, value : Int) -> Unit {
+  writer.write_string("\\u")
+  writer.write_char(hex_digit((value >> 12) & 0xf))
+  writer.write_char(hex_digit((value >> 8) & 0xf))
+  writer.write_char(hex_digit((value >> 4) & 0xf))
+  writer.write_char(hex_digit(value & 0xf))
+}
+
+///|
+fn hex_digit(value : Int) -> Char {
+  match value {
+    0 => '0'
+    1 => '1'
+    2 => '2'
+    3 => '3'
+    4 => '4'
+    5 => '5'
+    6 => '6'
+    7 => '7'
+    8 => '8'
+    9 => '9'
+    10 => 'a'
+    11 => 'b'
+    12 => 'c'
+    13 => 'd'
+    14 => 'e'
+    15 => 'f'
+    _ => panic()
+  }
+}
+
+///|
+fn is_valid_literal_block_scalar(value : String) -> Bool {
+  value
+  .iter()
+  .all(ch => ch == '\t' ||
+    ch == '\n' ||
+    ch is ('\u{0020}'..='\u{007e}') ||
+    ch == '\u{0085}' ||
+    ch is ('\u{00a0}'..='\u{d7ff}'))
+}
+
+///|
+fn need_quotes_spaces(value : String) -> Bool {
+  let len = value.length()
+  value.trim_start(chars=" ").length() != len ||
+  value.trim_end(chars=" ").length() != len
+}
+
+///|
+/// Check if the string requires quoting.
+///
+/// Strings starting with any of the following characters must be quoted:
+/// `:`, `&`, `*`, `?`, `|`, `-`, `<`, `>`, `=`, `!`, `%`, `@`.
+///
+/// Strings containing any of the following characters must be quoted:
+/// `{`, `}`, `[`, `]`, `,`, `#`, `` ` ``.
+///
+/// If the string contains any of the following control characters, it must be
+/// escaped with double quotes:
+/// `\0`, `\x01`, `\x02`, `\x03`, `\x04`, `\x05`, `\x06`, `\a`, `\b`, `\t`,
+/// `\n`, `\v`, `\f`, `\r`, `\x0e`, `\x0f`, `\x10`, `\x11`, `\x12`, `\x13`,
+/// `\x14`, `\x15`, `\x16`, `\x17`, `\x18`, `\x19`, `\x1a`, `\e`, `\x1c`,
+/// `\x1d`, `\x1e`, `\x1f`, `\N`, `\_`, `\L`, `\P`.
+///
+/// Finally, there are other cases when the strings must be quoted:
+/// - When the string is true or false.
+/// - When the string is null or "~".
+/// - When the string looks like a number, such as integers, floats, and
+///   exponential numbers.
+/// - When the string looks like a date (e.g. 2014-12-31).
+fn need_quotes(value : String) -> Bool {
+  if value.is_empty() || need_quotes_spaces(value) {
+    return true
+  }
+  match value.get_char(0) {
+    Some(ch) if ch
+      is ('&' | '*' | '?' | '|' | '-' | '<' | '>' | '=' | '!' | '%' | '@') =>
+      return true
+    _ => ()
+  }
+  if value
+    .iter()
+    .any(ch => ch
+      is (':' | '{' | '}' | '[' | ']' | ',' | '#' | '`' | '"' | '\'' | '\\') ||
+      ch.to_int() <= 0x06 ||
+      ch == '\t' ||
+      ch == '\n' ||
+      ch == '\r' ||
+      (ch.to_int() >= 0x0e && ch.to_int() <= 0x1a) ||
+      (ch.to_int() >= 0x1c && ch.to_int() <= 0x1f)) {
+    return true
+  }
+  if [
+      "true", "false", "True", "False", "TRUE", "FALSE", "null", "Null", "NULL",
+      "~", "y", "Y", "n", "N", "yes", "Yes", "YES", "no", "No", "NO", "True", "TRUE",
+      "False", "FALSE", "on", "On", "ON", "off", "Off", "OFF",
+    ].contains(value) {
+    return true
+  }
+  match value.get_char(0) {
+    Some('.') => return true
+    _ => ()
+  }
+  if value is ['0', 'x', ..] {
+    return true
+  }
+  (try? @strconv.parse_int64(value)) is Ok(_) ||
+  (try? @strconv.parse_double(value)) is Ok(_)
+}

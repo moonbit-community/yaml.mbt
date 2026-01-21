@@ -49,6 +49,7 @@ priv enum TokenType {
 } derive(Eq, Show)
 
 ///|
+#warnings("-unused_value")
 priv struct Token {
   marker : Marker
   token_type : TokenType

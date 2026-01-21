@@ -65,11 +65,19 @@ pub(all) enum Yaml {
   Null
   BadValue
 }
+pub fn Yaml::dump(Self) -> String
 pub fn Yaml::load_from_parser(Parser) -> Array[Self] raise YamlError
 pub fn Yaml::load_from_string(StringView) -> Array[Self] raise YamlError
 pub impl Eq for Yaml
 pub impl Show for Yaml
 pub impl ToJson for Yaml
+
+type YamlEmitter
+pub fn YamlEmitter::compact(Self, Bool) -> Unit
+pub fn YamlEmitter::dump(Self, Yaml) -> Unit
+pub fn YamlEmitter::multiline_strings(Self, Bool) -> Unit
+pub fn YamlEmitter::new(writer? : StringBuilder) -> Self
+pub fn YamlEmitter::to_string(Self) -> String
 
 // Type aliases
 
