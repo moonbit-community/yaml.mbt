@@ -8,7 +8,7 @@ This library is ported from yaml-rust2.
 
 ### Basic Example
 
-```mbt
+```mbt nocheck
 ///|
 test {
   let source =
@@ -28,7 +28,7 @@ test {
     #|    - Revision 1.2.0      # Jul 21, 2009
     #|  - YAML 1.1
     #|  - YAML 1.0
-  @json.inspect(@yaml.Yaml::load_from_string(source), content=[
+  json_inspect(@yaml.Yaml::load_from_string(source), content=[
     {
       "YAML": "YAML Ain't Markup Language™",
       "What It Is": "YAML is a human-friendly data serialization language for all programming languages.",
