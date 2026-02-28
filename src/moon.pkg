@@ -1,0 +1,9 @@
+import {
+  "moonbitlang/core/deque",
+  "moonbitlang/core/double",
+  "moonbitlang/core/hashmap",
+  "moonbitlang/core/sorted_map",
+  "moonbitlang/core/strconv",
+}
+
+warnings = "-1"

@@ -564,11 +564,13 @@ fn hex_digit(value : Int) -> Char {
 fn is_valid_literal_block_scalar(value : String) -> Bool {
   value
   .iter()
-  .all(ch => ch == '\t' ||
+  .all(ch => {
+    ch == '\t' ||
     ch == '\n' ||
     ch is ('\u{0020}'..='\u{007e}') ||
     ch == '\u{0085}' ||
-    ch is ('\u{00a0}'..='\u{d7ff}'))
+    ch is ('\u{00a0}'..='\u{d7ff}')
+  })
 }
 
 ///|
@@ -612,14 +614,15 @@ fn need_quotes(value : String) -> Bool {
   }
   if value
     .iter()
-    .any(ch => ch
-      is (':' | '{' | '}' | '[' | ']' | ',' | '#' | '`' | '"' | '\'' | '\\') ||
+    .any(ch => {
+      ch is (':' | '{' | '}' | '[' | ']' | ',' | '#' | '`' | '"' | '\'' | '\\') ||
       ch.to_int() <= 0x06 ||
       ch == '\t' ||
       ch == '\n' ||
       ch == '\r' ||
       (ch.to_int() >= 0x0e && ch.to_int() <= 0x1a) ||
-      (ch.to_int() >= 0x1c && ch.to_int() <= 0x1f)) {
+      (ch.to_int() >= 0x1c && ch.to_int() <= 0x1f)
+    }) {
     return true
   }
   if [
