@@ -1,12 +1,16 @@
 // Generated using `moon info`, DON'T EDIT IT
 package "moonbit-community/yaml"
 
+import {
+  "moonbitlang/core/debug",
+}
+
 // Values
 
 // Errors
 pub suberror YamlError {
   YamlError(mark~ : Marker, info~ : String)
-}
+} derive(@debug.Debug)
 pub impl Show for YamlError
 
 // Types and methods
@@ -21,16 +25,14 @@ pub enum Event {
   SequenceEnd
   MappingStart(id~ : Int, tag~ : Tag?)
   MappingEnd
-}
-pub impl Eq for Event
+} derive(Eq, @debug.Debug)
 pub impl Show for Event
 
 pub struct Marker {
   index : Int
   line : Int
   col : Int
-}
-pub impl Eq for Marker
+} derive(Eq, @debug.Debug)
 pub impl Show for Marker
 
 type Parser
@@ -44,15 +46,13 @@ pub enum TScalarStyle {
   DoubleQuoted
   Literal
   Folded
-}
-pub impl Eq for TScalarStyle
+} derive(Eq, @debug.Debug)
 pub impl Show for TScalarStyle
 
 pub struct Tag {
   handle : String
   suffix : String
-}
-pub impl Eq for Tag
+} derive(Eq, @debug.Debug)
 pub impl Show for Tag
 
 pub(all) enum Yaml {
@@ -64,11 +64,10 @@ pub(all) enum Yaml {
   Map(Map[String, Yaml])
   Null
   BadValue
-}
+} derive(Eq, @debug.Debug)
 pub fn Yaml::dump(Self) -> String
 pub fn Yaml::load_from_parser(Parser) -> Array[Self] raise YamlError
 pub fn Yaml::load_from_string(StringView) -> Array[Self] raise YamlError
-pub impl Eq for Yaml
 pub impl Show for Yaml
 pub impl ToJson for Yaml
 
