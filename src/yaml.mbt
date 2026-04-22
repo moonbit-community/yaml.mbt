@@ -48,17 +48,17 @@ pub impl ToJson for Yaml with to_json(self) {
 ///|
 fn Yaml::from_str(v : String) -> Yaml {
   match v {
-    ['0', 'x', .. number] if (try? @strconv.parse_int64(number, base=16))
+    ['0', 'x', .. number] if (try? @string.parse_int64(number, base=16))
       is Ok(i) => Yaml::Integer(i)
-    ['0', 'o', .. number] if (try? @strconv.parse_int64(number, base=8))
+    ['0', 'o', .. number] if (try? @string.parse_int64(number, base=8))
       is Ok(i) => Yaml::Integer(i)
-    ['+', .. number] if (try? @strconv.parse_int64(number)) is Ok(i) =>
+    ['+', .. number] if (try? @string.parse_int64(number)) is Ok(i) =>
       Yaml::Integer(i)
     "" | "~" | "null" => Yaml::Null
     "true" | "True" | "TRUE" => Yaml::Boolean(true)
     "false" | "False" | "FALSE" => Yaml::Boolean(false)
     v =>
-      if (try? @strconv.parse_int64(v)) is Ok(integer) {
+      if (try? @string.parse_int64(v)) is Ok(integer) {
         Yaml::Integer(integer)
       } else if parse_double(v) is Some(d) {
         Yaml::Real(d, repr=v)
@@ -92,8 +92,8 @@ fn parse_double(v : StringView) -> Double? {
     "-.inf" | "-.Inf" | "-.INF" => Some(@double.neg_infinity)
     ".nan" | ".NaN" | ".NAN" => Some(@double.not_a_number)
     v if v.iter().any(ch => ch.is_ascii_digit()) =>
-      Some(@strconv.parse_double(v)) catch {
-        @strconv.StrConvError(_) => None
+      Some(@string.parse_double(v)) catch {
+        _ => None
       }
     _ => None
   }
@@ -187,8 +187,8 @@ fn YamlLoader::on_event_impl(
                 _ => Yaml::BadValue
               }
             "int" =>
-              Yaml::Integer(@strconv.parse_int64(value)) catch {
-                @strconv.StrConvError(_) => Yaml::BadValue
+              Yaml::Integer(@string.parse_int64(value)) catch {
+                _ => Yaml::BadValue
               }
             "float" =>
               match parse_double(value) {
@@ -644,6 +644,6 @@ fn need_quotes(value : String) -> Bool {
   if value is ['0', 'x', ..] {
     return true
   }
-  (try? @strconv.parse_int64(value)) is Ok(_) ||
-  (try? @strconv.parse_double(value)) is Ok(_)
+  (try? @string.parse_int64(value)) is Ok(_) ||
+  (try? @string.parse_double(value)) is Ok(_)
 }
