@@ -50,8 +50,8 @@ fn Yaml::from_str(v : String) -> Yaml {
   match v {
     ['0', 'x', .. number] if (try? @string.parse_int64(number, base=16))
       is Ok(i) => Yaml::Integer(i)
-    ['0', 'o', .. number] if (try? @string.parse_int64(number, base=8))
-      is Ok(i) => Yaml::Integer(i)
+    ['0', 'o', .. number] if (try? @string.parse_int64(number, base=8)) is Ok(i) =>
+      Yaml::Integer(i)
     ['+', .. number] if (try? @string.parse_int64(number)) is Ok(i) =>
       Yaml::Integer(i)
     "" | "~" | "null" => Yaml::Null
