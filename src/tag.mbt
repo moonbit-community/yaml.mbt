@@ -4,4 +4,9 @@ pub struct Tag {
   handle : String
   /// The suffix of the tag.
   suffix : String
-} derive(Eq, Show)
+} derive(Eq, Debug)
+
+///|
+pub impl Show for Tag with output(self, logger) {
+  self.to_repr().output(logger)
+}

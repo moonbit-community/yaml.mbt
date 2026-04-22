@@ -25,7 +25,12 @@ pub enum Event {
   MappingStart(id~ : Int, tag~ : Tag?)
   /// The end of a YAML mapping (object, hash).
   MappingEnd
-} derive(Eq, Show)
+} derive(Eq, Debug)
+
+///|
+pub impl Show for Event with output(self, logger) {
+  self.to_repr().output(logger)
+}
 
 ///|
 fn Event::empty_scalar() -> Event {
