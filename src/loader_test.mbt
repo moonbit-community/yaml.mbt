@@ -456,31 +456,30 @@ test "testcase from OpenAI OpenAPI" {
 ///|
 fn visual_to_raw(yaml : String) -> String {
   let buf = StringBuilder::new(size_hint=yaml.length() * 2)
-  loop yaml[:] {
-    [] => buf.to_string()
-    ['∎', '\n', .. rest] | ['—', .. rest] | ['↵', .. rest] =>
-      continue rest
-    ['␣', .. rest] => {
-      buf.write_char(' ')
-      continue rest
+  let mut pending_end_marker = false
+  for ch in yaml.iter() {
+    if pending_end_marker {
+      if ch == '\n' {
+        pending_end_marker = false
+        continue
+      }
+      buf.write_char('∎')
+      pending_end_marker = false
     }
-    ['»', .. rest] => {
-      buf.write_char('\t')
-      continue rest
-    }
-    ['←', .. rest] => {
-      buf.write_char('\r')
-      continue rest
-    }
-    ['⇔', .. rest] => {
-      buf.write_char('\u{FEFF}')
-      continue rest
-    }
-    [ch, .. rest] => {
-      buf.write_char(ch)
-      continue rest
+    match ch {
+      '∎' => pending_end_marker = true
+      '—' | '↵' => ()
+      '␣' => buf.write_char(' ')
+      '»' => buf.write_char('\t')
+      '←' => buf.write_char('\r')
+      '⇔' => buf.write_char('\u{FEFF}')
+      _ => buf.write_char(ch)
     }
   }
+  if pending_end_marker {
+    buf.write_char('∎')
+  }
+  buf.to_string()
 }
 
 ///|
