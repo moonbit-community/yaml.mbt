@@ -6,4 +6,9 @@ pub struct Marker {
   line : Int
   /// The column (1-indexed).
   col : Int
-} derive(Show, Eq)
+} derive(Debug, Eq)
+
+///|
+pub impl Show for Marker with output(self, logger) {
+  self.to_repr().output(logger)
+}

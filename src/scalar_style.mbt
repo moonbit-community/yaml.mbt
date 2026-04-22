@@ -10,4 +10,9 @@ pub enum TScalarStyle {
   Literal
   /// A YAML folded block (`>` block).
   Folded
-} derive(Eq, Show)
+} derive(Eq, Debug)
+
+///|
+pub impl Show for TScalarStyle with output(self, logger) {
+  self.to_repr().output(logger)
+}

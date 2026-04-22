@@ -23,7 +23,12 @@ pub(all) enum Yaml {
   /// simplifies error handling in the calling code. Invalid type conversion also
   /// returns `BadValue`.
   BadValue
-} derive(Eq, Show)
+} derive(Eq, Debug)
+
+///|
+pub impl Show for Yaml with output(self, logger) {
+  self.to_repr().output(logger)
+}
 
 ///|
 pub impl ToJson for Yaml with to_json(self) {

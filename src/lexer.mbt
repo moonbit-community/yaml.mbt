@@ -46,14 +46,24 @@ priv enum TokenType {
   Tag(handle~ : String, suffix~ : String)
   /// A regular YAML scalar.
   Scalar(TScalarStyle, String)
-} derive(Eq, Show)
+} derive(Eq, Debug)
+
+///|
+impl Show for TokenType with output(self, logger) {
+  self.to_repr().output(logger)
+}
 
 ///|
 #warnings("-unused_value")
 priv struct Token {
   marker : Marker
   token_type : TokenType
-} derive(Show)
+} derive(Debug)
+
+///|
+impl Show for Token with output(self, logger) {
+  self.to_repr().output(logger)
+}
 
 ///|
 /// A scalar that was parsed and may correspond to a simple key.
