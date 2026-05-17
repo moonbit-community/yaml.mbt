@@ -43,9 +43,9 @@ fn Char::to_digit(self : Char) -> Int? {
 
 ///|
 test {
-  assert_eq('0'.to_digit(), Some(0))
-  assert_eq('9'.to_digit(), Some(9))
-  assert_eq('A'.to_digit(), None)
+  @debug.assert_eq('0'.to_digit(), Some(0))
+  @debug.assert_eq('9'.to_digit(), Some(9))
+  @debug.assert_eq('A'.to_digit(), None)
 }
 
 ///|
@@ -87,12 +87,12 @@ fn Char::as_hex(self : Char) -> Int {
 
 ///|
 test {
-  assert_eq('0'.as_hex(), 0)
-  assert_eq('9'.as_hex(), 9)
-  assert_eq('a'.as_hex(), 10)
-  assert_eq('A'.as_hex(), 10)
-  assert_eq('f'.as_hex(), 15)
-  assert_eq('F'.as_hex(), 15)
+  @debug.assert_eq('0'.as_hex(), 0)
+  @debug.assert_eq('9'.as_hex(), 9)
+  @debug.assert_eq('a'.as_hex(), 10)
+  @debug.assert_eq('A'.as_hex(), 10)
+  @debug.assert_eq('f'.as_hex(), 15)
+  @debug.assert_eq('F'.as_hex(), 15)
 }
 
 ///|
