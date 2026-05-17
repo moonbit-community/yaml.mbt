@@ -253,8 +253,8 @@ fn Lexer::new(input : StringView) -> Lexer {
     index: 0,
     line: 1,
     col: 0,
-    buffer: @deque.new(capacity=BUFFER_LEN),
-    tokens: @deque.new(capacity=42),
+    buffer: @deque.Deque([], capacity=BUFFER_LEN),
+    tokens: @deque.Deque([], capacity=42),
     error: None,
     stream_start_produced: false,
     stream_end_produced: false,
@@ -807,7 +807,7 @@ fn Lexer::scan_flow_scalar(
   let leading_break = StringBuilder::new()
   let trailing_breaks = StringBuilder::new()
   let whitespaces = StringBuilder::new()
-  let leading_blanks = Ref::new(false)
+  let leading_blanks = Ref(false)
 
   // Eat the left quote.
   self.skip_non_blank()
@@ -1076,7 +1076,7 @@ fn Lexer::scan_block_scalar(
   let start_mark = self.get_marker()
   let mut chomping = Chomping::Clip
   let mut increment = 0
-  let indent = Ref::new(0)
+  let indent = Ref(0)
   let mut trailing_blank = false
   let mut leading_blank = false
   let style = if literal { TScalarStyle::Literal } else { TScalarStyle::Folded }

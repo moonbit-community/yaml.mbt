@@ -116,7 +116,7 @@ pub fn Yaml::load_from_parser(parser : Parser) -> Array[Yaml] raise YamlError {
     docs: [],
     doc_stack: [],
     key_stack: [],
-    anchor_map: @sorted_map.new(),
+    anchor_map: @sorted_map.SortedMap([]),
     error: None,
   }
   parser.load(loader, true)
