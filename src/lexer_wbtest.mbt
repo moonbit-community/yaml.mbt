@@ -8,7 +8,7 @@ test "empty" {
   let p = Lexer::new("")
   inspect(p.next_t(), content="StreamStart")
   inspect(p.next_t(), content="StreamEnd")
-  inspect(p.next(), content="None")
+  @debug.debug_inspect(p.next(), content="None")
 }
 
 ///|
@@ -22,7 +22,7 @@ test "scalar" {
     ),
   )
   inspect(p.next_t(), content="StreamEnd")
-  inspect(p.next(), content="None")
+  @debug.debug_inspect(p.next(), content="None")
 }
 
 ///|
@@ -42,7 +42,7 @@ test "explicit scalar" {
   )
   inspect(p.next_t(), content="DocumentEnd")
   inspect(p.next_t(), content="StreamEnd")
-  inspect(p.next(), content="None")
+  @debug.debug_inspect(p.next(), content="None")
 }
 
 ///|
@@ -76,7 +76,7 @@ test "multiple documents" {
     ),
   )
   inspect(p.next_t(), content="StreamEnd")
-  inspect(p.next(), content="None")
+  @debug.debug_inspect(p.next(), content="None")
 }
 
 ///|
@@ -107,7 +107,7 @@ test "flow sequence" {
   )
   inspect(p.next_t(), content="FlowSequenceEnd")
   inspect(p.next_t(), content="StreamEnd")
-  inspect(p.next(), content="None")
+  @debug.debug_inspect(p.next(), content="None")
 }
 
 ///|
@@ -152,7 +152,7 @@ test "flow mapping" {
   inspect(p.next_t(), content="FlowEntry")
   inspect(p.next_t(), content="FlowMappingEnd")
   inspect(p.next_t(), content="StreamEnd")
-  inspect(p.next(), content="None")
+  @debug.debug_inspect(p.next(), content="None")
 }
 
 ///|
@@ -233,7 +233,7 @@ test "block sequences" {
   inspect(p.next_t(), content="BlockEnd")
   inspect(p.next_t(), content="BlockEnd")
   inspect(p.next_t(), content="StreamEnd")
-  inspect(p.next(), content="None")
+  @debug.debug_inspect(p.next(), content="None")
 }
 
 ///|
@@ -343,7 +343,7 @@ test "block mappings" {
   inspect(p.next_t(), content="BlockEnd")
   inspect(p.next_t(), content="BlockEnd")
   inspect(p.next_t(), content="StreamEnd")
-  inspect(p.next(), content="None")
+  @debug.debug_inspect(p.next(), content="None")
 }
 
 ///|
@@ -379,7 +379,7 @@ test "no block sequence start" {
   )
   inspect(p.next_t(), content="BlockEnd")
   inspect(p.next_t(), content="StreamEnd")
-  inspect(p.next(), content="None")
+  @debug.debug_inspect(p.next(), content="None")
 }
 
 ///|
@@ -461,7 +461,7 @@ test "collections in sequence" {
   inspect(p.next_t(), content="BlockEnd")
   inspect(p.next_t(), content="BlockEnd")
   inspect(p.next_t(), content="StreamEnd")
-  inspect(p.next(), content="None")
+  @debug.debug_inspect(p.next(), content="None")
 }
 
 ///|
@@ -540,7 +540,7 @@ test "collections in mapping" {
   inspect(p.next_t(), content="BlockEnd")
   inspect(p.next_t(), content="BlockEnd")
   inspect(p.next_t(), content="StreamEnd")
-  inspect(p.next(), content="None")
+  @debug.debug_inspect(p.next(), content="None")
 }
 
 ///|
@@ -572,7 +572,7 @@ test "spec ex7_3" {
   inspect(p.next_t(), content="FlowEntry")
   inspect(p.next_t(), content="FlowMappingEnd")
   inspect(p.next_t(), content="StreamEnd")
-  inspect(p.next(), content="None")
+  @debug.debug_inspect(p.next(), content="None")
 }
 
 ///|
@@ -600,7 +600,7 @@ test "plain scalar starting with indicators in flow" {
   )
   inspect(p.next_t(), content="FlowMappingEnd")
   inspect(p.next_t(), content="StreamEnd")
-  inspect(p.next(), content="None")
+  @debug.debug_inspect(p.next(), content="None")
   let s = "{a: ?b}"
   let p = Lexer::new(s)
   inspect(p.next_t(), content="StreamStart")
@@ -621,7 +621,7 @@ test "plain scalar starting with indicators in flow" {
   )
   inspect(p.next_t(), content="FlowMappingEnd")
   inspect(p.next_t(), content="StreamEnd")
-  inspect(p.next(), content="None")
+  @debug.debug_inspect(p.next(), content="None")
 }
 
 ///|
@@ -636,7 +636,7 @@ test "plain scalar starting with indicators in block" {
     ),
   )
   inspect(p.next_t(), content="StreamEnd")
-  inspect(p.next(), content="None")
+  @debug.debug_inspect(p.next(), content="None")
   let s = "?a"
   let p = Lexer::new(s)
   inspect(p.next_t(), content="StreamStart")
@@ -647,7 +647,7 @@ test "plain scalar starting with indicators in block" {
     ),
   )
   inspect(p.next_t(), content="StreamEnd")
-  inspect(p.next(), content="None")
+  @debug.debug_inspect(p.next(), content="None")
 }
 
 ///|
@@ -662,7 +662,7 @@ test "plain scalar containing indicators in block" {
     ),
   )
   inspect(p.next_t(), content="StreamEnd")
-  inspect(p.next(), content="None")
+  @debug.debug_inspect(p.next(), content="None")
   let s = ":,b"
   let p = Lexer::new(s)
   inspect(p.next_t(), content="StreamStart")
@@ -673,7 +673,7 @@ test "plain scalar containing indicators in block" {
     ),
   )
   inspect(p.next_t(), content="StreamEnd")
-  inspect(p.next(), content="None")
+  @debug.debug_inspect(p.next(), content="None")
 }
 
 ///|
@@ -699,7 +699,7 @@ test "lexer cr" {
   )
   inspect(p.next_t(), content="BlockEnd")
   inspect(p.next_t(), content="StreamEnd")
-  inspect(p.next(), content="None")
+  @debug.debug_inspect(p.next(), content="None")
 }
 
 ///|
@@ -779,7 +779,7 @@ test "keep tags across multiple documents" {
   )
   inspect(p.next_t(), content="BlockEnd")
   inspect(p.next_t(), content="StreamEnd")
-  inspect(p.next(), content="None")
+  @debug.debug_inspect(p.next(), content="None")
 }
 
 ///|
@@ -807,7 +807,7 @@ test "large block scalar indent" {
   )
   inspect(p.next_t(), content="BlockEnd")
   inspect(p.next_t(), content="StreamEnd")
-  inspect(p.next(), content="None")
+  @debug.debug_inspect(p.next(), content="None")
 }
 
 ///|
@@ -902,7 +902,7 @@ test "tag directives" {
   )
   inspect(p.next_t(), content="BlockEnd")
   inspect(p.next_t(), content="StreamEnd")
-  inspect(p.next(), content="None")
+  @debug.debug_inspect(p.next(), content="None")
 }
 
 ///|
@@ -1046,7 +1046,7 @@ test "looks like float but actually string" {
   )
   inspect(p.next_t(), content="BlockEnd")
   inspect(p.next_t(), content="StreamEnd")
-  inspect(p.next(), content="None")
+  @debug.debug_inspect(p.next(), content="None")
 }
 
 ///|
@@ -1072,5 +1072,5 @@ test "testcase from OpenAI OpenAPI" {
   )
   inspect(p.next_t(), content="BlockEnd")
   inspect(p.next_t(), content="StreamEnd")
-  inspect(p.next(), content="None")
+  @debug.debug_inspect(p.next(), content="None")
 }
