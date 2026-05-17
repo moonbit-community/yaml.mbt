@@ -52,10 +52,10 @@ pub fn Parser::new(str : StringView) -> Parser {
     state: State::StreamStart,
     token: None,
     current: None,
-    anchors: @hashmap.HashMap::new(),
+    anchors: @hashmap.HashMap([]),
     // valid anchor_id starts from 1
     anchor_id: 1,
-    tags: @hashmap.HashMap::new(),
+    tags: @hashmap.HashMap([]),
     keep_tags: false,
   }
 }
@@ -133,7 +133,7 @@ test "peek eq parse" {
   while true {
     let event_peek = p.peek()
     let event = p.next_token()
-    assert_eq(event, event_peek)
+    @debug.assert_eq(event, event_peek)
     if event.0 is Event::StreamEnd {
       break
     }
@@ -939,7 +939,7 @@ fn Parser::explicit_document_start(
 fn Parser::parser_process_directives(self : Parser) -> Unit raise YamlError {
   let mut version_directive_received = false
   while true {
-    let tags = @hashmap.HashMap::new()
+    let tags = @hashmap.HashMap([])
     match self.peek_token() {
       { marker, token_type: TokenType::VersionDirective(..) } => {
         // XXX parsing with warning according to spec
