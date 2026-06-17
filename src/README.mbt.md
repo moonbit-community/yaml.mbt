@@ -8,7 +8,7 @@ This library is ported from yaml-rust2.
 
 ### Basic Example
 
-```mbt nocheck
+```mbt check
 ///|
 test {
   let source =
