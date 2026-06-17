@@ -26,12 +26,7 @@ pub(all) enum Yaml {
 } derive(Eq, Debug)
 
 ///|
-pub impl Show for Yaml with output(self, logger) {
-  self.to_repr().output(logger)
-}
-
-///|
-pub impl ToJson for Yaml with to_json(self) {
+pub impl ToJson for Yaml with fn to_json(self) {
   // assume input not contain complicate yaml feature
   match self {
     Null => Json::null()
@@ -48,17 +43,34 @@ pub impl ToJson for Yaml with to_json(self) {
 ///|
 fn Yaml::from_str(v : String) -> Yaml {
   match v {
-    ['0', 'x', .. number] if (try? @string.parse_int64(number, base=16))
+    ['0', 'x', .. number] if (try @string.parse_int64(number, base=16) catch {
+        err => Err(err)
+      } noraise {
+        val => Ok(val)
+      })
       is Ok(i) => Yaml::Integer(i)
-    ['0', 'o', .. number] if (try? @string.parse_int64(number, base=8)) is Ok(i) =>
-      Yaml::Integer(i)
-    ['+', .. number] if (try? @string.parse_int64(number)) is Ok(i) =>
-      Yaml::Integer(i)
+    ['0', 'o', .. number] if (try @string.parse_int64(number, base=8) catch {
+        err => Err(err)
+      } noraise {
+        val => Ok(val)
+      })
+      is Ok(i) => Yaml::Integer(i)
+    ['+', .. number] if (try @string.parse_int64(number) catch {
+        err => Err(err)
+      } noraise {
+        val => Ok(val)
+      })
+      is Ok(i) => Yaml::Integer(i)
     "" | "~" | "null" => Yaml::Null
     "true" | "True" | "TRUE" => Yaml::Boolean(true)
     "false" | "False" | "FALSE" => Yaml::Boolean(false)
     v =>
-      if (try? @string.parse_int64(v)) is Ok(integer) {
+      if (try @string.parse_int64(v) catch {
+          err => Err(err)
+        } noraise {
+          val => Ok(val)
+        })
+        is Ok(integer) {
         Yaml::Integer(integer)
       } else if parse_double(v) is Some(d) {
         Yaml::Real(d, repr=v)
@@ -70,16 +82,16 @@ fn Yaml::from_str(v : String) -> Yaml {
 
 ///|
 test "simple string to yaml" {
-  inspect(Yaml::from_str("42"), content="Integer(42)")
-  inspect(Yaml::from_str("0x2A"), content="Integer(42)")
-  inspect(Yaml::from_str("0o52"), content="Integer(42)")
-  inspect(Yaml::from_str("~"), content="Null")
-  inspect(Yaml::from_str("true"), content="Boolean(true)")
-  inspect(Yaml::from_str("True"), content="Boolean(true)")
-  inspect(Yaml::from_str("TRUE"), content="Boolean(true)")
-  inspect(Yaml::from_str("false"), content="Boolean(false)")
-  inspect(Yaml::from_str("False"), content="Boolean(false)")
-  inspect(Yaml::from_str("FALSE"), content="Boolean(false)")
+  debug_inspect(Yaml::from_str("42"), content="Integer(42)")
+  debug_inspect(Yaml::from_str("0x2A"), content="Integer(42)")
+  debug_inspect(Yaml::from_str("0o52"), content="Integer(42)")
+  debug_inspect(Yaml::from_str("~"), content="Null")
+  debug_inspect(Yaml::from_str("true"), content="Boolean(true)")
+  debug_inspect(Yaml::from_str("True"), content="Boolean(true)")
+  debug_inspect(Yaml::from_str("TRUE"), content="Boolean(true)")
+  debug_inspect(Yaml::from_str("false"), content="Boolean(false)")
+  debug_inspect(Yaml::from_str("False"), content="Boolean(false)")
+  debug_inspect(Yaml::from_str("FALSE"), content="Boolean(false)")
   assert_true(Yaml::from_str("3.14") is Yaml::Real(_))
   assert_true(Yaml::from_str("hello") is Yaml::String(_))
 }
@@ -136,7 +148,7 @@ pub fn Yaml::load_from_string(
 }
 
 ///|
-impl MarkedEventReceiver for YamlLoader with on_event(self, ev, mark) {
+impl MarkedEventReceiver for YamlLoader with fn on_event(self, ev, mark) {
   if self.error is Some(_) {
     return
   }
@@ -644,6 +656,14 @@ fn need_quotes(value : String) -> Bool {
   if value is ['0', 'x', ..] {
     return true
   }
-  (try? @string.parse_int64(value)) is Ok(_) ||
-  (try? @string.parse_double(value)) is Ok(_)
+  try ignore(@string.parse_int64(value)) catch {
+    _ =>
+      try ignore(@string.parse_double(value)) catch {
+        _ => false
+      } noraise {
+        _ => true
+      }
+  } noraise {
+    _ => true
+  }
 }

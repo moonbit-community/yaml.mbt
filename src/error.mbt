@@ -4,8 +4,3 @@ pub suberror YamlError {
   /// - `info`: Human-readable details about the error.
   YamlError(mark~ : Marker, info~ : String)
 } derive(Debug)
-
-///|
-pub impl Show for YamlError with output(self, logger) {
-  self.to_repr().output(logger)
-}
