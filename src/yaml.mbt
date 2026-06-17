@@ -42,41 +42,37 @@ pub impl ToJson for Yaml with fn to_json(self) {
 
 ///|
 fn Yaml::from_str(v : String) -> Yaml {
+  fn yaml_from_str(v : String) -> Yaml {
+    if (try @string.parse_int64(v) catch {
+        err => Err(err)
+      } noraise {
+        val => Ok(val)
+      })
+      is Ok(integer) {
+      Yaml::Integer(integer)
+    } else if parse_double(v) is Some(d) {
+      Yaml::Real(d, repr=v)
+    } else {
+      Yaml::String(v)
+    }
+  }
   match v {
-    ['0', 'x', .. number] if (try @string.parse_int64(number, base=16) catch {
-        err => Err(err)
-      } noraise {
-        val => Ok(val)
-      })
-      is Ok(i) => Yaml::Integer(i)
-    ['0', 'o', .. number] if (try @string.parse_int64(number, base=8) catch {
-        err => Err(err)
-      } noraise {
-        val => Ok(val)
-      })
-      is Ok(i) => Yaml::Integer(i)
-    ['+', .. number] if (try @string.parse_int64(number) catch {
-        err => Err(err)
-      } noraise {
-        val => Ok(val)
-      })
-      is Ok(i) => Yaml::Integer(i)
+    ['0', 'x', .. number] =>
+      Yaml::Integer(@string.parse_int64(number, base=16)) catch {
+        _ => yaml_from_str(v)
+      }
+    ['0', 'o', .. number] =>
+      Yaml::Integer(@string.parse_int64(number, base=8)) catch {
+        _ => yaml_from_str(v)
+      }
+    ['+', .. number] =>
+      Yaml::Integer(@string.parse_int64(number)) catch {
+        _ => yaml_from_str(v)
+      }
     "" | "~" | "null" => Yaml::Null
     "true" | "True" | "TRUE" => Yaml::Boolean(true)
     "false" | "False" | "FALSE" => Yaml::Boolean(false)
-    v =>
-      if (try @string.parse_int64(v) catch {
-          err => Err(err)
-        } noraise {
-          val => Ok(val)
-        })
-        is Ok(integer) {
-        Yaml::Integer(integer)
-      } else if parse_double(v) is Some(d) {
-        Yaml::Real(d, repr=v)
-      } else {
-        Yaml::String(v)
-      }
+    v => yaml_from_str(v)
   }
 }
 
