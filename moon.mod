@@ -10,7 +10,7 @@ license = "MIT"
 
 keywords = [ ]
 
-description = ""
+description = "A simple YAML parsing and stringifying library for MoonBit, support a simplified YAML subset which can be convert to JSON."
 
 options(
   source: "src",
