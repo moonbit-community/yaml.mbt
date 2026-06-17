@@ -6,23 +6,23 @@ fn Lexer::next_t(self : Lexer) -> TokenType {
 ///|
 test "empty" {
   let p = Lexer::new("")
-  inspect(p.next_t(), content="StreamStart")
-  inspect(p.next_t(), content="StreamEnd")
-  @debug.debug_inspect(p.next(), content="None")
+  debug_inspect(p.next_t(), content="StreamStart")
+  debug_inspect(p.next_t(), content="StreamEnd")
+  debug_inspect(p.next(), content="None")
 }
 
 ///|
 test "scalar" {
   let p = Lexer::new("a scalar")
-  inspect(p.next_t(), content="StreamStart")
-  inspect(
+  debug_inspect(p.next_t(), content="StreamStart")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(Plain, "a scalar")
     ),
   )
-  inspect(p.next_t(), content="StreamEnd")
-  @debug.debug_inspect(p.next(), content="None")
+  debug_inspect(p.next_t(), content="StreamEnd")
+  debug_inspect(p.next(), content="None")
 }
 
 ///|
@@ -32,17 +32,17 @@ test "explicit scalar" {
     #|'a scalar'
     #|...
   let p = Lexer::new(s)
-  inspect(p.next_t(), content="StreamStart")
-  inspect(p.next_t(), content="DocumentStart")
-  inspect(
+  debug_inspect(p.next_t(), content="StreamStart")
+  debug_inspect(p.next_t(), content="DocumentStart")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(SingleQuoted, "a scalar")
     ),
   )
-  inspect(p.next_t(), content="DocumentEnd")
-  inspect(p.next_t(), content="StreamEnd")
-  @debug.debug_inspect(p.next(), content="None")
+  debug_inspect(p.next_t(), content="DocumentEnd")
+  debug_inspect(p.next_t(), content="StreamEnd")
+  debug_inspect(p.next(), content="None")
 }
 
 ///|
@@ -54,60 +54,60 @@ test "multiple documents" {
     #|---
     #|'a scalar'
   let p = Lexer::new(s)
-  inspect(p.next_t(), content="StreamStart")
-  inspect(
+  debug_inspect(p.next_t(), content="StreamStart")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(SingleQuoted, "a scalar")
     ),
   )
-  inspect(p.next_t(), content="DocumentStart")
-  inspect(
+  debug_inspect(p.next_t(), content="DocumentStart")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(SingleQuoted, "a scalar")
     ),
   )
-  inspect(p.next_t(), content="DocumentStart")
-  inspect(
+  debug_inspect(p.next_t(), content="DocumentStart")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(SingleQuoted, "a scalar")
     ),
   )
-  inspect(p.next_t(), content="StreamEnd")
-  @debug.debug_inspect(p.next(), content="None")
+  debug_inspect(p.next_t(), content="StreamEnd")
+  debug_inspect(p.next(), content="None")
 }
 
 ///|
 test "flow sequence" {
   let s = "[item 1, item 2, item 3]"
   let p = Lexer::new(s)
-  inspect(p.next_t(), content="StreamStart")
-  inspect(p.next_t(), content="FlowSequenceStart")
-  inspect(
+  debug_inspect(p.next_t(), content="StreamStart")
+  debug_inspect(p.next_t(), content="FlowSequenceStart")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(Plain, "item 1")
     ),
   )
-  inspect(p.next_t(), content="FlowEntry")
-  inspect(
+  debug_inspect(p.next_t(), content="FlowEntry")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(Plain, "item 2")
     ),
   )
-  inspect(p.next_t(), content="FlowEntry")
-  inspect(
+  debug_inspect(p.next_t(), content="FlowEntry")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(Plain, "item 3")
     ),
   )
-  inspect(p.next_t(), content="FlowSequenceEnd")
-  inspect(p.next_t(), content="StreamEnd")
-  @debug.debug_inspect(p.next(), content="None")
+  debug_inspect(p.next_t(), content="FlowSequenceEnd")
+  debug_inspect(p.next_t(), content="StreamEnd")
+  debug_inspect(p.next(), content="None")
 }
 
 ///|
@@ -118,41 +118,41 @@ test "flow mapping" {
     #|    ? a complex key: another value,
     #|}
   let p = Lexer::new(s)
-  inspect(p.next_t(), content="StreamStart")
-  inspect(p.next_t(), content="FlowMappingStart")
-  inspect(p.next_t(), content="Key")
-  inspect(
+  debug_inspect(p.next_t(), content="StreamStart")
+  debug_inspect(p.next_t(), content="FlowMappingStart")
+  debug_inspect(p.next_t(), content="Key")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(Plain, "a simple key")
     ),
   )
-  inspect(p.next_t(), content="Value")
-  inspect(
+  debug_inspect(p.next_t(), content="Value")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(Plain, "a value")
     ),
   )
-  inspect(p.next_t(), content="FlowEntry")
-  inspect(p.next_t(), content="Key")
-  inspect(
+  debug_inspect(p.next_t(), content="FlowEntry")
+  debug_inspect(p.next_t(), content="Key")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(Plain, "a complex key")
     ),
   )
-  inspect(p.next_t(), content="Value")
-  inspect(
+  debug_inspect(p.next_t(), content="Value")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(Plain, "another value")
     ),
   )
-  inspect(p.next_t(), content="FlowEntry")
-  inspect(p.next_t(), content="FlowMappingEnd")
-  inspect(p.next_t(), content="StreamEnd")
-  @debug.debug_inspect(p.next(), content="None")
+  debug_inspect(p.next_t(), content="FlowEntry")
+  debug_inspect(p.next_t(), content="FlowMappingEnd")
+  debug_inspect(p.next_t(), content="StreamEnd")
+  debug_inspect(p.next(), content="None")
 }
 
 ///|
@@ -167,73 +167,73 @@ test "block sequences" {
     #|  key 1: value 1
     #|  key 2: value 2
   let p = Lexer::new(s)
-  inspect(p.next_t(), content="StreamStart")
-  inspect(p.next_t(), content="BlockSequenceStart")
-  inspect(p.next_t(), content="BlockEntry")
-  inspect(
+  debug_inspect(p.next_t(), content="StreamStart")
+  debug_inspect(p.next_t(), content="BlockSequenceStart")
+  debug_inspect(p.next_t(), content="BlockEntry")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(Plain, "item 1")
     ),
   )
-  inspect(p.next_t(), content="BlockEntry")
-  inspect(
+  debug_inspect(p.next_t(), content="BlockEntry")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(Plain, "item 2")
     ),
   )
-  inspect(p.next_t(), content="BlockEntry")
-  inspect(p.next_t(), content="BlockSequenceStart")
-  inspect(p.next_t(), content="BlockEntry")
-  inspect(
+  debug_inspect(p.next_t(), content="BlockEntry")
+  debug_inspect(p.next_t(), content="BlockSequenceStart")
+  debug_inspect(p.next_t(), content="BlockEntry")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(Plain, "item 3.1")
     ),
   )
-  inspect(p.next_t(), content="BlockEntry")
-  inspect(
+  debug_inspect(p.next_t(), content="BlockEntry")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(Plain, "item 3.2")
     ),
   )
-  inspect(p.next_t(), content="BlockEnd")
-  inspect(p.next_t(), content="BlockEntry")
-  inspect(p.next_t(), content="BlockMappingStart")
-  inspect(p.next_t(), content="Key")
-  inspect(
+  debug_inspect(p.next_t(), content="BlockEnd")
+  debug_inspect(p.next_t(), content="BlockEntry")
+  debug_inspect(p.next_t(), content="BlockMappingStart")
+  debug_inspect(p.next_t(), content="Key")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(Plain, "key 1")
     ),
   )
-  inspect(p.next_t(), content="Value")
-  inspect(
+  debug_inspect(p.next_t(), content="Value")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(Plain, "value 1")
     ),
   )
-  inspect(p.next_t(), content="Key")
-  inspect(
+  debug_inspect(p.next_t(), content="Key")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(Plain, "key 2")
     ),
   )
-  inspect(p.next_t(), content="Value")
-  inspect(
+  debug_inspect(p.next_t(), content="Value")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(Plain, "value 2")
     ),
   )
-  inspect(p.next_t(), content="BlockEnd")
-  inspect(p.next_t(), content="BlockEnd")
-  inspect(p.next_t(), content="StreamEnd")
-  @debug.debug_inspect(p.next(), content="None")
+  debug_inspect(p.next_t(), content="BlockEnd")
+  debug_inspect(p.next_t(), content="BlockEnd")
+  debug_inspect(p.next_t(), content="StreamEnd")
+  debug_inspect(p.next(), content="None")
 }
 
 ///|
@@ -249,101 +249,101 @@ test "block mappings" {
     #|  - item 1
     #|  - item 2
   let p = Lexer::new(s)
-  inspect(p.next_t(), content="StreamStart")
-  inspect(p.next_t(), content="BlockMappingStart")
-  inspect(p.next_t(), content="Key")
-  inspect(
+  debug_inspect(p.next_t(), content="StreamStart")
+  debug_inspect(p.next_t(), content="BlockMappingStart")
+  debug_inspect(p.next_t(), content="Key")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(Plain, "a simple key")
     ),
   )
-  inspect(p.next_t(), content="Value")
-  inspect(
+  debug_inspect(p.next_t(), content="Value")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(Plain, "a value")
     ),
   )
-  inspect(p.next_t(), content="Key")
-  inspect(
+  debug_inspect(p.next_t(), content="Key")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(Plain, "a complex key")
     ),
   )
-  inspect(p.next_t(), content="Value")
-  inspect(
+  debug_inspect(p.next_t(), content="Value")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(Plain, "another value")
     ),
   )
-  inspect(p.next_t(), content="Key")
-  inspect(
+  debug_inspect(p.next_t(), content="Key")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(Plain, "a mapping")
     ),
   )
-  inspect(p.next_t(), content="Value")
-  inspect(p.next_t(), content="BlockMappingStart")
-  inspect(p.next_t(), content="Key")
-  inspect(
+  debug_inspect(p.next_t(), content="Value")
+  debug_inspect(p.next_t(), content="BlockMappingStart")
+  debug_inspect(p.next_t(), content="Key")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(Plain, "key 1")
     ),
   )
-  inspect(p.next_t(), content="Value")
-  inspect(
+  debug_inspect(p.next_t(), content="Value")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(Plain, "value 1")
     ),
   )
-  inspect(p.next_t(), content="Key")
-  inspect(
+  debug_inspect(p.next_t(), content="Key")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(Plain, "key 2")
     ),
   )
-  inspect(p.next_t(), content="Value")
-  inspect(
+  debug_inspect(p.next_t(), content="Value")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(Plain, "value 2")
     ),
   )
-  inspect(p.next_t(), content="BlockEnd")
-  inspect(p.next_t(), content="Key")
-  inspect(
+  debug_inspect(p.next_t(), content="BlockEnd")
+  debug_inspect(p.next_t(), content="Key")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(Plain, "a sequence")
     ),
   )
-  inspect(p.next_t(), content="Value")
-  inspect(p.next_t(), content="BlockSequenceStart")
-  inspect(p.next_t(), content="BlockEntry")
-  inspect(
+  debug_inspect(p.next_t(), content="Value")
+  debug_inspect(p.next_t(), content="BlockSequenceStart")
+  debug_inspect(p.next_t(), content="BlockEntry")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(Plain, "item 1")
     ),
   )
-  inspect(p.next_t(), content="BlockEntry")
-  inspect(
+  debug_inspect(p.next_t(), content="BlockEntry")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(Plain, "item 2")
     ),
   )
-  inspect(p.next_t(), content="BlockEnd")
-  inspect(p.next_t(), content="BlockEnd")
-  inspect(p.next_t(), content="StreamEnd")
-  @debug.debug_inspect(p.next(), content="None")
+  debug_inspect(p.next_t(), content="BlockEnd")
+  debug_inspect(p.next_t(), content="BlockEnd")
+  debug_inspect(p.next_t(), content="StreamEnd")
+  debug_inspect(p.next(), content="None")
 }
 
 ///|
@@ -353,33 +353,33 @@ test "no block sequence start" {
     #|- item 1
     #|- item 2
   let p = Lexer::new(s)
-  inspect(p.next_t(), content="StreamStart")
-  inspect(p.next_t(), content="BlockMappingStart")
-  inspect(p.next_t(), content="Key")
-  inspect(
+  debug_inspect(p.next_t(), content="StreamStart")
+  debug_inspect(p.next_t(), content="BlockMappingStart")
+  debug_inspect(p.next_t(), content="Key")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(Plain, "key")
     ),
   )
-  inspect(p.next_t(), content="Value")
-  inspect(p.next_t(), content="BlockEntry")
-  inspect(
+  debug_inspect(p.next_t(), content="Value")
+  debug_inspect(p.next_t(), content="BlockEntry")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(Plain, "item 1")
     ),
   )
-  inspect(p.next_t(), content="BlockEntry")
-  inspect(
+  debug_inspect(p.next_t(), content="BlockEntry")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(Plain, "item 2")
     ),
   )
-  inspect(p.next_t(), content="BlockEnd")
-  inspect(p.next_t(), content="StreamEnd")
-  @debug.debug_inspect(p.next(), content="None")
+  debug_inspect(p.next_t(), content="BlockEnd")
+  debug_inspect(p.next_t(), content="StreamEnd")
+  debug_inspect(p.next(), content="None")
 }
 
 ///|
@@ -392,76 +392,76 @@ test "collections in sequence" {
     #|- ? complex key
     #|  : complex value
   let p = Lexer::new(s)
-  inspect(p.next_t(), content="StreamStart")
-  inspect(p.next_t(), content="BlockSequenceStart")
-  inspect(p.next_t(), content="BlockEntry")
-  inspect(p.next_t(), content="BlockSequenceStart")
-  inspect(p.next_t(), content="BlockEntry")
-  inspect(
+  debug_inspect(p.next_t(), content="StreamStart")
+  debug_inspect(p.next_t(), content="BlockSequenceStart")
+  debug_inspect(p.next_t(), content="BlockEntry")
+  debug_inspect(p.next_t(), content="BlockSequenceStart")
+  debug_inspect(p.next_t(), content="BlockEntry")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(Plain, "item 1")
     ),
   )
-  inspect(p.next_t(), content="BlockEntry")
-  inspect(
+  debug_inspect(p.next_t(), content="BlockEntry")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(Plain, "item 2")
     ),
   )
-  inspect(p.next_t(), content="BlockEnd")
-  inspect(p.next_t(), content="BlockEntry")
-  inspect(p.next_t(), content="BlockMappingStart")
-  inspect(p.next_t(), content="Key")
-  inspect(
+  debug_inspect(p.next_t(), content="BlockEnd")
+  debug_inspect(p.next_t(), content="BlockEntry")
+  debug_inspect(p.next_t(), content="BlockMappingStart")
+  debug_inspect(p.next_t(), content="Key")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(Plain, "key 1")
     ),
   )
-  inspect(p.next_t(), content="Value")
-  inspect(
+  debug_inspect(p.next_t(), content="Value")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(Plain, "value 1")
     ),
   )
-  inspect(p.next_t(), content="Key")
-  inspect(
+  debug_inspect(p.next_t(), content="Key")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(Plain, "key 2")
     ),
   )
-  inspect(p.next_t(), content="Value")
-  inspect(
+  debug_inspect(p.next_t(), content="Value")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(Plain, "value 2")
     ),
   )
-  inspect(p.next_t(), content="BlockEnd")
-  inspect(p.next_t(), content="BlockEntry")
-  inspect(p.next_t(), content="BlockMappingStart")
-  inspect(p.next_t(), content="Key")
-  inspect(
+  debug_inspect(p.next_t(), content="BlockEnd")
+  debug_inspect(p.next_t(), content="BlockEntry")
+  debug_inspect(p.next_t(), content="BlockMappingStart")
+  debug_inspect(p.next_t(), content="Key")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(Plain, "complex key")
     ),
   )
-  inspect(p.next_t(), content="Value")
-  inspect(
+  debug_inspect(p.next_t(), content="Value")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(Plain, "complex value")
     ),
   )
-  inspect(p.next_t(), content="BlockEnd")
-  inspect(p.next_t(), content="BlockEnd")
-  inspect(p.next_t(), content="StreamEnd")
-  @debug.debug_inspect(p.next(), content="None")
+  debug_inspect(p.next_t(), content="BlockEnd")
+  debug_inspect(p.next_t(), content="BlockEnd")
+  debug_inspect(p.next_t(), content="StreamEnd")
+  debug_inspect(p.next(), content="None")
 }
 
 ///|
@@ -474,73 +474,73 @@ test "collections in mapping" {
     #|: key 1: value 1
     #|  key 2: value 2
   let p = Lexer::new(s)
-  inspect(p.next_t(), content="StreamStart")
-  inspect(p.next_t(), content="BlockMappingStart")
-  inspect(p.next_t(), content="Key")
-  inspect(
+  debug_inspect(p.next_t(), content="StreamStart")
+  debug_inspect(p.next_t(), content="BlockMappingStart")
+  debug_inspect(p.next_t(), content="Key")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(Plain, "a sequence")
     ),
   )
-  inspect(p.next_t(), content="Value")
-  inspect(p.next_t(), content="BlockSequenceStart")
-  inspect(p.next_t(), content="BlockEntry")
-  inspect(
+  debug_inspect(p.next_t(), content="Value")
+  debug_inspect(p.next_t(), content="BlockSequenceStart")
+  debug_inspect(p.next_t(), content="BlockEntry")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(Plain, "item 1")
     ),
   )
-  inspect(p.next_t(), content="BlockEntry")
-  inspect(
+  debug_inspect(p.next_t(), content="BlockEntry")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(Plain, "item 2")
     ),
   )
-  inspect(p.next_t(), content="BlockEnd")
-  inspect(p.next_t(), content="Key")
-  inspect(
+  debug_inspect(p.next_t(), content="BlockEnd")
+  debug_inspect(p.next_t(), content="Key")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(Plain, "a mapping")
     ),
   )
-  inspect(p.next_t(), content="Value")
-  inspect(p.next_t(), content="BlockMappingStart")
-  inspect(p.next_t(), content="Key")
-  inspect(
+  debug_inspect(p.next_t(), content="Value")
+  debug_inspect(p.next_t(), content="BlockMappingStart")
+  debug_inspect(p.next_t(), content="Key")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(Plain, "key 1")
     ),
   )
-  inspect(p.next_t(), content="Value")
-  inspect(
+  debug_inspect(p.next_t(), content="Value")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(Plain, "value 1")
     ),
   )
-  inspect(p.next_t(), content="Key")
-  inspect(
+  debug_inspect(p.next_t(), content="Key")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(Plain, "key 2")
     ),
   )
-  inspect(p.next_t(), content="Value")
-  inspect(
+  debug_inspect(p.next_t(), content="Value")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(Plain, "value 2")
     ),
   )
-  inspect(p.next_t(), content="BlockEnd")
-  inspect(p.next_t(), content="BlockEnd")
-  inspect(p.next_t(), content="StreamEnd")
-  @debug.debug_inspect(p.next(), content="None")
+  debug_inspect(p.next_t(), content="BlockEnd")
+  debug_inspect(p.next_t(), content="BlockEnd")
+  debug_inspect(p.next_t(), content="StreamEnd")
+  debug_inspect(p.next(), content="None")
 }
 
 ///|
@@ -551,28 +551,28 @@ test "spec ex7_3" {
     #|    : bar,
     #|}
   let p = Lexer::new(s)
-  inspect(p.next_t(), content="StreamStart")
-  inspect(p.next_t(), content="FlowMappingStart")
-  inspect(p.next_t(), content="Key")
-  inspect(
+  debug_inspect(p.next_t(), content="StreamStart")
+  debug_inspect(p.next_t(), content="FlowMappingStart")
+  debug_inspect(p.next_t(), content="Key")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(Plain, "foo")
     ),
   )
-  inspect(p.next_t(), content="Value")
-  inspect(p.next_t(), content="FlowEntry")
-  inspect(p.next_t(), content="Value")
-  inspect(
+  debug_inspect(p.next_t(), content="Value")
+  debug_inspect(p.next_t(), content="FlowEntry")
+  debug_inspect(p.next_t(), content="Value")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(Plain, "bar")
     ),
   )
-  inspect(p.next_t(), content="FlowEntry")
-  inspect(p.next_t(), content="FlowMappingEnd")
-  inspect(p.next_t(), content="StreamEnd")
-  @debug.debug_inspect(p.next(), content="None")
+  debug_inspect(p.next_t(), content="FlowEntry")
+  debug_inspect(p.next_t(), content="FlowMappingEnd")
+  debug_inspect(p.next_t(), content="StreamEnd")
+  debug_inspect(p.next(), content="None")
 }
 
 ///|
@@ -582,124 +582,124 @@ test "plain scalar starting with indicators in flow" {
   // character if followed by a non-space “safe” character, as this causes no ambiguity."
   let s = "{a: :b}"
   let p = Lexer::new(s)
-  inspect(p.next_t(), content="StreamStart")
-  inspect(p.next_t(), content="FlowMappingStart")
-  inspect(p.next_t(), content="Key")
-  inspect(
+  debug_inspect(p.next_t(), content="StreamStart")
+  debug_inspect(p.next_t(), content="FlowMappingStart")
+  debug_inspect(p.next_t(), content="Key")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(Plain, "a")
     ),
   )
-  inspect(p.next_t(), content="Value")
-  inspect(
+  debug_inspect(p.next_t(), content="Value")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(Plain, ":b")
     ),
   )
-  inspect(p.next_t(), content="FlowMappingEnd")
-  inspect(p.next_t(), content="StreamEnd")
-  @debug.debug_inspect(p.next(), content="None")
+  debug_inspect(p.next_t(), content="FlowMappingEnd")
+  debug_inspect(p.next_t(), content="StreamEnd")
+  debug_inspect(p.next(), content="None")
   let s = "{a: ?b}"
   let p = Lexer::new(s)
-  inspect(p.next_t(), content="StreamStart")
-  inspect(p.next_t(), content="FlowMappingStart")
-  inspect(p.next_t(), content="Key")
-  inspect(
+  debug_inspect(p.next_t(), content="StreamStart")
+  debug_inspect(p.next_t(), content="FlowMappingStart")
+  debug_inspect(p.next_t(), content="Key")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(Plain, "a")
     ),
   )
-  inspect(p.next_t(), content="Value")
-  inspect(
+  debug_inspect(p.next_t(), content="Value")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(Plain, "?b")
     ),
   )
-  inspect(p.next_t(), content="FlowMappingEnd")
-  inspect(p.next_t(), content="StreamEnd")
-  @debug.debug_inspect(p.next(), content="None")
+  debug_inspect(p.next_t(), content="FlowMappingEnd")
+  debug_inspect(p.next_t(), content="StreamEnd")
+  debug_inspect(p.next(), content="None")
 }
 
 ///|
 test "plain scalar starting with indicators in block" {
   let s = ":a"
   let p = Lexer::new(s)
-  inspect(p.next_t(), content="StreamStart")
-  inspect(
+  debug_inspect(p.next_t(), content="StreamStart")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(Plain, ":a")
     ),
   )
-  inspect(p.next_t(), content="StreamEnd")
-  @debug.debug_inspect(p.next(), content="None")
+  debug_inspect(p.next_t(), content="StreamEnd")
+  debug_inspect(p.next(), content="None")
   let s = "?a"
   let p = Lexer::new(s)
-  inspect(p.next_t(), content="StreamStart")
-  inspect(
+  debug_inspect(p.next_t(), content="StreamStart")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(Plain, "?a")
     ),
   )
-  inspect(p.next_t(), content="StreamEnd")
-  @debug.debug_inspect(p.next(), content="None")
+  debug_inspect(p.next_t(), content="StreamEnd")
+  debug_inspect(p.next(), content="None")
 }
 
 ///|
 test "plain scalar containing indicators in block" {
   let s = "a:,b"
   let p = Lexer::new(s)
-  inspect(p.next_t(), content="StreamStart")
-  inspect(
+  debug_inspect(p.next_t(), content="StreamStart")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(Plain, "a:,b")
     ),
   )
-  inspect(p.next_t(), content="StreamEnd")
-  @debug.debug_inspect(p.next(), content="None")
+  debug_inspect(p.next_t(), content="StreamEnd")
+  debug_inspect(p.next(), content="None")
   let s = ":,b"
   let p = Lexer::new(s)
-  inspect(p.next_t(), content="StreamStart")
-  inspect(
+  debug_inspect(p.next_t(), content="StreamStart")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(Plain, ":,b")
     ),
   )
-  inspect(p.next_t(), content="StreamEnd")
-  @debug.debug_inspect(p.next(), content="None")
+  debug_inspect(p.next_t(), content="StreamEnd")
+  debug_inspect(p.next(), content="None")
 }
 
 ///|
 test "lexer cr" {
   let s = "---\r\n- tok1\r\n- tok2"
   let p = Lexer::new(s)
-  inspect(p.next_t(), content="StreamStart")
-  inspect(p.next_t(), content="DocumentStart")
-  inspect(p.next_t(), content="BlockSequenceStart")
-  inspect(p.next_t(), content="BlockEntry")
-  inspect(
+  debug_inspect(p.next_t(), content="StreamStart")
+  debug_inspect(p.next_t(), content="DocumentStart")
+  debug_inspect(p.next_t(), content="BlockSequenceStart")
+  debug_inspect(p.next_t(), content="BlockEntry")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(Plain, "tok1")
     ),
   )
-  inspect(p.next_t(), content="BlockEntry")
-  inspect(
+  debug_inspect(p.next_t(), content="BlockEntry")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(Plain, "tok2")
     ),
   )
-  inspect(p.next_t(), content="BlockEnd")
-  inspect(p.next_t(), content="StreamEnd")
-  @debug.debug_inspect(p.next(), content="None")
+  debug_inspect(p.next_t(), content="BlockEnd")
+  debug_inspect(p.next_t(), content="StreamEnd")
+  debug_inspect(p.next(), content="None")
 }
 
 ///|
@@ -712,74 +712,74 @@ test "keep tags across multiple documents" {
     #|--- !t!2 &2
     #|baz: "qux"
   let p = Lexer::new(source)
-  inspect(p.next_t(), content="StreamStart")
-  inspect(p.next_t(), content="VersionDirective(major=1, minor=1)")
-  inspect(
+  debug_inspect(p.next_t(), content="StreamStart")
+  debug_inspect(p.next_t(), content="VersionDirective(major=1, minor=1)")
+  debug_inspect(
     p.next_t(),
     content=(
       #|TagDirective(handle="!t!", prefix="tag:test,2024:")
     ),
   )
-  inspect(p.next_t(), content="DocumentStart")
-  inspect(
+  debug_inspect(p.next_t(), content="DocumentStart")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Tag(handle="!t!", suffix="1")
     ),
   )
-  inspect(
+  debug_inspect(
     p.next_t(),
     content=(
       #|Anchor("1")
     ),
   )
-  inspect(p.next_t(), content="BlockMappingStart")
-  inspect(p.next_t(), content="Key")
-  inspect(
+  debug_inspect(p.next_t(), content="BlockMappingStart")
+  debug_inspect(p.next_t(), content="Key")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(Plain, "foo")
     ),
   )
-  inspect(p.next_t(), content="Value")
-  inspect(
+  debug_inspect(p.next_t(), content="Value")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(DoubleQuoted, "bar")
     ),
   )
-  inspect(p.next_t(), content="BlockEnd")
-  inspect(p.next_t(), content="DocumentStart")
-  inspect(
+  debug_inspect(p.next_t(), content="BlockEnd")
+  debug_inspect(p.next_t(), content="DocumentStart")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Tag(handle="!t!", suffix="2")
     ),
   )
-  inspect(
+  debug_inspect(
     p.next_t(),
     content=(
       #|Anchor("2")
     ),
   )
-  inspect(p.next_t(), content="BlockMappingStart")
-  inspect(p.next_t(), content="Key")
-  inspect(
+  debug_inspect(p.next_t(), content="BlockMappingStart")
+  debug_inspect(p.next_t(), content="Key")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(Plain, "baz")
     ),
   )
-  inspect(p.next_t(), content="Value")
-  inspect(
+  debug_inspect(p.next_t(), content="Value")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(DoubleQuoted, "qux")
     ),
   )
-  inspect(p.next_t(), content="BlockEnd")
-  inspect(p.next_t(), content="StreamEnd")
-  @debug.debug_inspect(p.next(), content="None")
+  debug_inspect(p.next_t(), content="BlockEnd")
+  debug_inspect(p.next_t(), content="StreamEnd")
+  debug_inspect(p.next(), content="None")
 }
 
 ///|
@@ -789,25 +789,25 @@ test "large block scalar indent" {
     #|                  a
     #|                      b
   let p = Lexer::new(source)
-  inspect(p.next_t(), content="StreamStart")
-  inspect(p.next_t(), content="BlockMappingStart")
-  inspect(p.next_t(), content="Key")
-  inspect(
+  debug_inspect(p.next_t(), content="StreamStart")
+  debug_inspect(p.next_t(), content="BlockMappingStart")
+  debug_inspect(p.next_t(), content="Key")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(Plain, "a")
     ),
   )
-  inspect(p.next_t(), content="Value")
-  inspect(
+  debug_inspect(p.next_t(), content="Value")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(Literal, "a\n    b")
     ),
   )
-  inspect(p.next_t(), content="BlockEnd")
-  inspect(p.next_t(), content="StreamEnd")
-  @debug.debug_inspect(p.next(), content="None")
+  debug_inspect(p.next_t(), content="BlockEnd")
+  debug_inspect(p.next_t(), content="StreamEnd")
+  debug_inspect(p.next(), content="None")
 }
 
 ///|
@@ -820,89 +820,89 @@ test "tag directives" {
     #|- !!bool true
     #|- !!bool false
   let p = Lexer::new(source)
-  inspect(p.next_t(), content="StreamStart")
-  inspect(p.next_t(), content="BlockSequenceStart")
-  inspect(p.next_t(), content="BlockEntry")
-  inspect(
+  debug_inspect(p.next_t(), content="StreamStart")
+  debug_inspect(p.next_t(), content="BlockSequenceStart")
+  debug_inspect(p.next_t(), content="BlockEntry")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Tag(handle="!!", suffix="str")
     ),
   )
-  inspect(
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(Plain, "0")
     ),
   )
-  inspect(p.next_t(), content="BlockEntry")
-  inspect(
+  debug_inspect(p.next_t(), content="BlockEntry")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Tag(handle="!!", suffix="int")
     ),
   )
-  inspect(
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(Plain, "100")
     ),
   )
-  inspect(p.next_t(), content="BlockEntry")
-  inspect(
+  debug_inspect(p.next_t(), content="BlockEntry")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Tag(handle="!!", suffix="float")
     ),
   )
-  inspect(
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(Plain, "2")
     ),
   )
-  inspect(p.next_t(), content="BlockEntry")
-  inspect(
+  debug_inspect(p.next_t(), content="BlockEntry")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Tag(handle="!!", suffix="null")
     ),
   )
-  inspect(
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(Plain, "~")
     ),
   )
-  inspect(p.next_t(), content="BlockEntry")
-  inspect(
+  debug_inspect(p.next_t(), content="BlockEntry")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Tag(handle="!!", suffix="bool")
     ),
   )
-  inspect(
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(Plain, "true")
     ),
   )
-  inspect(p.next_t(), content="BlockEntry")
-  inspect(
+  debug_inspect(p.next_t(), content="BlockEntry")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Tag(handle="!!", suffix="bool")
     ),
   )
-  inspect(
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(Plain, "false")
     ),
   )
-  inspect(p.next_t(), content="BlockEnd")
-  inspect(p.next_t(), content="StreamEnd")
-  @debug.debug_inspect(p.next(), content="None")
+  debug_inspect(p.next_t(), content="BlockEnd")
+  debug_inspect(p.next_t(), content="StreamEnd")
+  debug_inspect(p.next(), content="None")
 }
 
 ///|
@@ -916,137 +916,137 @@ test "looks like float but actually string" {
   }
   let source = buf.to_string()
   let p = Lexer::new(source)
-  inspect(p.next_t(), content="StreamStart")
-  inspect(p.next_t(), content="BlockSequenceStart")
-  inspect(p.next_t(), content="BlockEntry")
-  inspect(
+  debug_inspect(p.next_t(), content="StreamStart")
+  debug_inspect(p.next_t(), content="BlockSequenceStart")
+  debug_inspect(p.next_t(), content="BlockEntry")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(Plain, "+nan")
     ),
   )
-  inspect(p.next_t(), content="BlockEntry")
-  inspect(
+  debug_inspect(p.next_t(), content="BlockEntry")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(Plain, "-nan")
     ),
   )
-  inspect(p.next_t(), content="BlockEntry")
-  inspect(
+  debug_inspect(p.next_t(), content="BlockEntry")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(Plain, "nan")
     ),
   )
-  inspect(p.next_t(), content="BlockEntry")
-  inspect(
+  debug_inspect(p.next_t(), content="BlockEntry")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(Plain, "+NAN")
     ),
   )
-  inspect(p.next_t(), content="BlockEntry")
-  inspect(
+  debug_inspect(p.next_t(), content="BlockEntry")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(Plain, "-NAN")
     ),
   )
-  inspect(p.next_t(), content="BlockEntry")
-  inspect(
+  debug_inspect(p.next_t(), content="BlockEntry")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(Plain, "NAN")
     ),
   )
-  inspect(p.next_t(), content="BlockEntry")
-  inspect(
+  debug_inspect(p.next_t(), content="BlockEntry")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(Plain, "+NaN")
     ),
   )
-  inspect(p.next_t(), content="BlockEntry")
-  inspect(
+  debug_inspect(p.next_t(), content="BlockEntry")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(Plain, "-NaN")
     ),
   )
-  inspect(p.next_t(), content="BlockEntry")
-  inspect(
+  debug_inspect(p.next_t(), content="BlockEntry")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(Plain, "NaN")
     ),
   )
-  inspect(p.next_t(), content="BlockEntry")
-  inspect(
+  debug_inspect(p.next_t(), content="BlockEntry")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(Plain, "+inf")
     ),
   )
-  inspect(p.next_t(), content="BlockEntry")
-  inspect(
+  debug_inspect(p.next_t(), content="BlockEntry")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(Plain, "-inf")
     ),
   )
-  inspect(p.next_t(), content="BlockEntry")
-  inspect(
+  debug_inspect(p.next_t(), content="BlockEntry")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(Plain, "inf")
     ),
   )
-  inspect(p.next_t(), content="BlockEntry")
-  inspect(
+  debug_inspect(p.next_t(), content="BlockEntry")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(Plain, "+infinity")
     ),
   )
-  inspect(p.next_t(), content="BlockEntry")
-  inspect(
+  debug_inspect(p.next_t(), content="BlockEntry")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(Plain, "-infinity")
     ),
   )
-  inspect(p.next_t(), content="BlockEntry")
-  inspect(
+  debug_inspect(p.next_t(), content="BlockEntry")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(Plain, "infinity")
     ),
   )
-  inspect(p.next_t(), content="BlockEntry")
-  inspect(
+  debug_inspect(p.next_t(), content="BlockEntry")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(Plain, "+Infinity")
     ),
   )
-  inspect(p.next_t(), content="BlockEntry")
-  inspect(
+  debug_inspect(p.next_t(), content="BlockEntry")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(Plain, "-Infinity")
     ),
   )
-  inspect(p.next_t(), content="BlockEntry")
-  inspect(
+  debug_inspect(p.next_t(), content="BlockEntry")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(Plain, "Infinity")
     ),
   )
-  inspect(p.next_t(), content="BlockEnd")
-  inspect(p.next_t(), content="StreamEnd")
-  @debug.debug_inspect(p.next(), content="None")
+  debug_inspect(p.next_t(), content="BlockEnd")
+  debug_inspect(p.next_t(), content="StreamEnd")
+  debug_inspect(p.next(), content="None")
 }
 
 ///|
@@ -1054,23 +1054,23 @@ test "testcase from OpenAI OpenAPI" {
   let source =
     #|example: '[''This is a test.'']'
   let p = Lexer::new(source)
-  inspect(p.next_t(), content="StreamStart")
-  inspect(p.next_t(), content="BlockMappingStart")
-  inspect(p.next_t(), content="Key")
-  inspect(
+  debug_inspect(p.next_t(), content="StreamStart")
+  debug_inspect(p.next_t(), content="BlockMappingStart")
+  debug_inspect(p.next_t(), content="Key")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(Plain, "example")
     ),
   )
-  inspect(p.next_t(), content="Value")
-  inspect(
+  debug_inspect(p.next_t(), content="Value")
+  debug_inspect(
     p.next_t(),
     content=(
       #|Scalar(SingleQuoted, "['This is a test.']")
     ),
   )
-  inspect(p.next_t(), content="BlockEnd")
-  inspect(p.next_t(), content="StreamEnd")
-  @debug.debug_inspect(p.next(), content="None")
+  debug_inspect(p.next_t(), content="BlockEnd")
+  debug_inspect(p.next_t(), content="StreamEnd")
+  debug_inspect(p.next(), content="None")
 }

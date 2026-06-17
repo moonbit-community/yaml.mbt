@@ -49,21 +49,11 @@ priv enum TokenType {
 } derive(Eq, Debug)
 
 ///|
-impl Show for TokenType with output(self, logger) {
-  self.to_repr().output(logger)
-}
-
-///|
 #warnings("-unused_value")
 priv struct Token {
   marker : Marker
   token_type : TokenType
 } derive(Debug)
-
-///|
-impl Show for Token with output(self, logger) {
-  self.to_repr().output(logger)
-}
 
 ///|
 /// A scalar that was parsed and may correspond to a simple key.

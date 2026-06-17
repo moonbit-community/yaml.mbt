@@ -11,7 +11,6 @@ import {
 pub suberror YamlError {
   YamlError(mark~ : Marker, info~ : String)
 } derive(@debug.Debug)
-pub impl Show for YamlError
 
 // Types and methods
 pub enum Event {
@@ -26,14 +25,12 @@ pub enum Event {
   MappingStart(id~ : Int, tag~ : Tag?)
   MappingEnd
 } derive(Eq, @debug.Debug)
-pub impl Show for Event
 
 pub struct Marker {
   index : Int
   line : Int
   col : Int
 } derive(Eq, @debug.Debug)
-pub impl Show for Marker
 
 type Parser
 pub fn Parser::keep_tags(Self, Bool) -> Unit
@@ -47,13 +44,11 @@ pub enum TScalarStyle {
   Literal
   Folded
 } derive(Eq, @debug.Debug)
-pub impl Show for TScalarStyle
 
 pub struct Tag {
   handle : String
   suffix : String
 } derive(Eq, @debug.Debug)
-pub impl Show for Tag
 
 pub(all) enum Yaml {
   Real(Double, repr~ : String)
@@ -68,7 +63,6 @@ pub(all) enum Yaml {
 pub fn Yaml::dump(Self) -> String
 pub fn Yaml::load_from_parser(Parser) -> Array[Self] raise YamlError
 pub fn Yaml::load_from_string(StringView) -> Array[Self] raise YamlError
-pub impl Show for Yaml
 pub impl ToJson for Yaml
 
 type YamlEmitter
@@ -82,10 +76,10 @@ pub fn YamlEmitter::to_string(Self) -> String
 
 // Traits
 pub trait EventReceiver {
-  on_event(Self, Event) -> Unit
+  fn on_event(Self, Event) -> Unit
 }
 
 pub trait MarkedEventReceiver {
-  on_event(Self, Event, Marker) -> Unit
+  fn on_event(Self, Event, Marker) -> Unit
 }
 

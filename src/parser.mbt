@@ -266,7 +266,7 @@ fn[R : MarkedEventReceiver] Parser::load_node(
       self.load_mapping(recv)
     }
     _ => {
-      println("UNREACHABLE EVENT: \{first_ev}")
+      println("UNREACHABLE EVENT: \{first_ev.to_repr()}")
       panic()
     }
   }

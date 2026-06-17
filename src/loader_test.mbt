@@ -149,21 +149,21 @@ test "bad anchor" {
   let docs = Yaml::load_from_string(source)
   let doc = docs[0]
   guard doc is Yaml::Map(yaml_map) && yaml_map["a1"] is Yaml::Map(yaml_map) else {
-    fail("\{doc}")
+    fail("\{doc.to_repr()}")
   }
-  inspect(yaml_map["b2"], content="BadValue")
+  debug_inspect(yaml_map["b2"], content="BadValue")
 }
 
 ///|
 test "should throw error" {
   // bad hyphen
   let source = "{-"
-  assert_true((try? Yaml::load_from_string(source)) is Err(_))
+  @test.assert_raise(() => Yaml::load_from_string(source))
 
   // invalid trailing content after a double quoted string
   let source =
     #|"foo" l"
-  assert_true((try? Yaml::load_from_string(source)) is Err(_))
+  @test.assert_raise(() => Yaml::load_from_string(source))
 }
 
 ///|
@@ -235,69 +235,72 @@ test "plain datatype" {
   let docs = Yaml::load_from_string(source)
   @debug.assert_eq(docs.length(), 1)
   guard docs[0] is Yaml::Array(yaml_array) else {
-    fail("expect yaml array but got \{docs[0]}")
+    fail("expect yaml array but got \{docs[0].to_repr()}")
   }
-  inspect(
+  debug_inspect(
     yaml_array[0],
     content=(
       #|String("string")
     ),
   )
-  inspect(
+  debug_inspect(
     yaml_array[1],
     content=(
       #|String("string")
     ),
   )
-  inspect(
+  debug_inspect(
     yaml_array[2],
     content=(
       #|String("string")
     ),
   )
-  inspect(yaml_array[3], content="Integer(123)")
-  inspect(yaml_array[4], content="Integer(-321)")
-  inspect(
+  debug_inspect(yaml_array[3], content="Integer(123)")
+  debug_inspect(yaml_array[4], content="Integer(-321)")
+  debug_inspect(
     yaml_array[5],
     content=(
       #|Real(1.23, repr="1.23")
     ),
   )
-  inspect(
+  debug_inspect(
     yaml_array[6],
     content=(
       #|Real(-10000, repr="-1e4")
     ),
   )
-  inspect(yaml_array[7], content="Null")
-  inspect(yaml_array[8], content="Null")
-  inspect(yaml_array[9], content="Boolean(true)")
-  inspect(yaml_array[10], content="Boolean(false)")
-  inspect(
+  debug_inspect(yaml_array[7], content="Null")
+  debug_inspect(yaml_array[8], content="Null")
+  debug_inspect(yaml_array[9], content="Boolean(true)")
+  debug_inspect(yaml_array[10], content="Boolean(false)")
+  debug_inspect(
     yaml_array[11],
     content=(
       #|String("0")
     ),
   )
-  inspect(yaml_array[12], content="Integer(100)")
-  inspect(
+  debug_inspect(yaml_array[12], content="Integer(100)")
+  debug_inspect(
     yaml_array[13],
     content=(
       #|Real(2, repr="2")
     ),
   )
-  inspect(yaml_array[14], content="Null")
-  inspect(yaml_array[15], content="Boolean(true)")
-  inspect(yaml_array[16], content="Boolean(false)")
-  inspect(yaml_array[17], content="Integer(255)")
-  inspect(yaml_array[18], content="BadValue")
-  inspect(yaml_array[19], content="BadValue")
-  inspect(yaml_array[20], content="BadValue")
-  inspect(yaml_array[21], content="BadValue")
-  inspect(yaml_array[22], content="Integer(63)")
-  inspect(yaml_array[23], content="Array([Integer(15), Integer(15)])")
-  inspect(yaml_array[24], content="Integer(12345)")
-  inspect(yaml_array[25], content="Array([Boolean(true), Boolean(false)])")
+  debug_inspect(yaml_array[14], content="Null")
+  debug_inspect(yaml_array[15], content="Boolean(true)")
+  debug_inspect(yaml_array[16], content="Boolean(false)")
+  debug_inspect(yaml_array[17], content="Integer(255)")
+  debug_inspect(yaml_array[18], content="BadValue")
+  debug_inspect(yaml_array[19], content="BadValue")
+  debug_inspect(yaml_array[20], content="BadValue")
+  debug_inspect(yaml_array[21], content="BadValue")
+  debug_inspect(yaml_array[22], content="Integer(63)")
+  debug_inspect(yaml_array[23], content="Array([Integer(15), Integer(15)])")
+  debug_inspect(yaml_array[24], content="Integer(12345)")
+  debug_inspect(
+    yaml_array[25],
+    content="Array([Boolean(true), Boolean(false)])",
+  )
 }
 
 ///|
@@ -310,7 +313,7 @@ test "map order" {
   let docs = Yaml::load_from_string(source)
   @debug.assert_eq(docs.length(), 1)
   guard docs[0] is Yaml::Map(map) else {
-    fail("expect yaml map but got \{docs[0]}")
+    fail("expect yaml map but got \{docs[0].to_repr()}")
   }
   json_inspect(map.iter().collect(), content=[
     ["b", null],
@@ -327,8 +330,15 @@ test "integer key" {
     #|    important: true
     #|1:
     #|    important: false
-  guard (try? Yaml::load_from_string(source)) is Err(YamlError(info~, ..))
-  inspect(info, content="yaml.mbt doesn't support non-string key")
+  debug_inspect(
+    @test.expect_error(() => Yaml::load_from_string(source)),
+    content=(
+      #|YamlError(
+      #|  mark={ index: 0, line: 1, col: 0 },
+      #|  info="yaml.mbt doesn't support non-string key",
+      #|)
+    ),
+  )
 }
 
 ///|
@@ -390,7 +400,7 @@ test "recursion depth check objects" {
     buf.write_string("}")
   }
   let source = buf.to_string()
-  assert_true((try? Yaml::load_from_string(source)) is Err(_))
+  @test.assert_raise(() => Yaml::load_from_string(source))
 }
 
 ///|
@@ -403,7 +413,7 @@ test "recursion depth check arrays" {
     buf.write_char(']')
   }
   let source = buf.to_string()
-  assert_true((try? Yaml::load_from_string(source)) is Err(_))
+  @test.assert_raise(() => Yaml::load_from_string(source))
 }
 
 ///|
@@ -411,7 +421,7 @@ test "mapping duplicates" {
   let source =
     #|a: foo
     #|a: bar
-  assert_true((try? Yaml::load_from_string(source)) is Err(_))
+  @test.assert_raise(() => Yaml::load_from_string(source))
 }
 
 ///|
@@ -435,11 +445,11 @@ test "nominal float parse" {
   let docs = Yaml::load_from_string(source)
   @debug.assert_eq(docs.length(), 1)
   guard docs[0] is Yaml::Array(yaml_array) else {
-    fail("expect yaml array but got \{docs[0]}")
+    fail("expect yaml array but got \{docs[0].to_repr()}")
   }
   for yaml in yaml_array {
     guard yaml is Yaml::String(_) else {
-      fail("expect a yaml string but got \{yaml}")
+      fail("expect a yaml string but got \{yaml.to_repr()}")
     }
   }
 }

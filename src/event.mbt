@@ -28,11 +28,6 @@ pub enum Event {
 } derive(Eq, Debug)
 
 ///|
-pub impl Show for Event with output(self, logger) {
-  self.to_repr().output(logger)
-}
-
-///|
 fn Event::empty_scalar() -> Event {
   Event::Scalar(value="", style=TScalarStyle::Plain, id=0, tag=None)
 }
@@ -88,10 +83,10 @@ fn Event::empty_scalar_with_anchor(anchor : Int, tag : Tag?) -> Event {
 /// ```
 pub trait EventReceiver {
   /// Handler called for each YAML event that is emitted by the parser.
-  on_event(Self, event : Event) -> Unit
+  fn on_event(Self, event : Event) -> Unit
 }
 
 ///|
 pub trait MarkedEventReceiver {
-  on_event(Self, event : Event, _mark : Marker) -> Unit
+  fn on_event(Self, event : Event, _mark : Marker) -> Unit
 }
