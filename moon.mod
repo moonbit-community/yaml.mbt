@@ -1,6 +1,6 @@
 name = "moonbit-community/yaml"
 
-version = "0.0.5"
+version = "0.0.6"
 
 readme = "README.md"
 
