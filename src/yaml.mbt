@@ -174,7 +174,7 @@ fn YamlLoader::on_event_impl(
       self.insert_new_node(node, mark)
     }
     Event::MappingStart(id~, ..) => {
-      self.doc_stack.push((Yaml::Map({}), id))
+      self.doc_stack.push((Yaml::Map(Map([])), id))
       self.key_stack.push("") // place holder
     }
     Event::MappingEnd => {
