@@ -178,7 +178,7 @@ fn YamlLoader::on_event_impl(
       self.key_stack.push("") // place holder
     }
     Event::MappingEnd => {
-      guard self.key_stack.pop() is Some(_)
+      guard! self.key_stack.pop() is Some(_)
       let node = self.doc_stack.pop().unwrap()
       self.insert_new_node(node, mark)
     }

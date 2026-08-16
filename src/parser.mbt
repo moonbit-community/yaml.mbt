@@ -244,7 +244,7 @@ fn[R : MarkedEventReceiver] Parser::load_document(
 
   // DOCUMENT-END is expected.
   let (ev, mark) = self.next_token()
-  guard ev == Event::DocumentEnd
+  guard! ev == Event::DocumentEnd
   recv.on_event(ev, mark)
 }
 

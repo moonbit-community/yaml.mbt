@@ -417,7 +417,7 @@ fn Lexer::read_break(self : Lexer, buf : StringBuilder) -> Unit {
 ///
 /// `Self::lookahead` must have been called before calling this function.
 fn Lexer::next_is_document_end(self : Lexer) -> Bool {
-  guard self.buffer.length() >= 4
+  guard! self.buffer.length() >= 4
   self.buffer[0] == '.' &&
   self.buffer[1] == '.' &&
   self.buffer[2] == '.' &&
@@ -429,7 +429,7 @@ fn Lexer::next_is_document_end(self : Lexer) -> Bool {
 ///
 /// `Self::lookahead` must have been called before calling this function.
 fn Lexer::next_is_document_indicator(self : Lexer) -> Bool {
-  guard self.buffer.length() >= 4
+  guard! self.buffer.length() >= 4
   self.col == 0 &&
   (
     (self.buffer[0] == '-' && self.buffer[1] == '-' && self.buffer[2] == '-') ||
@@ -441,7 +441,7 @@ fn Lexer::next_is_document_indicator(self : Lexer) -> Bool {
 ///|
 /// Insert a token at the given position.
 fn Lexer::insert_token(self : Lexer, pos : Int, token : Token) -> Unit {
-  guard pos <= self.tokens.length()
+  guard! pos <= self.tokens.length()
   self.tokens.insert(pos, token)
 }
 
