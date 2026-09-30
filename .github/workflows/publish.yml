@@ -1,0 +1,68 @@
+name: publish
+
+# Publishes moonbit-community/yaml to mooncakes.io.
+# Needs the secret MOONCAKES_MOONBIT_COMMUNITY_TOKEN (repository or
+# organization level): the contents of ~/.moon/credentials.json of an account
+# allowed to publish moonbit-community modules (`moon login`).
+
+on:
+  workflow_dispatch:
+  release:
+    types: [released]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mooncakes-publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: install
+        run: |
+          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash
+          echo "$HOME/.moon/bin" >> $GITHUB_PATH
+
+      - name: moon version
+        run: |
+          moon version --all
+          moon update
+
+      # the same gate as the check workflow, on exactly what gets published
+      - name: validate
+        run: |
+          set -euo pipefail
+          moon check --target all
+          moon info
+          git diff --exit-code
+          moon fmt
+          git diff --exit-code
+          moon test --target all
+
+      - name: version not yet published
+        shell: bash
+        run: |
+          set -euo pipefail
+          name=$(sed -n 's/^name = "\(.*\)"$/\1/p' moon.mod)
+          version=$(sed -n 's/^version = "\(.*\)"$/\1/p' moon.mod)
+          published=$(curl -fsSL "https://mooncakes.io/api/v0/modules/$name" | jq -r .version)
+          echo "$name: moon.mod $version, mooncakes $published"
+          test "$version" != "$published" || { echo "::error::$name $version is already published; bump version in moon.mod"; exit 1; }
+
+      - name: publish
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$SECRET" || { echo "::error::missing secret MOONCAKES_MOONBIT_COMMUNITY_TOKEN"; exit 1; }
+          umask 077
+          mkdir -p "$HOME/.moon"
+          trap 'rm -f "$HOME/.moon/credentials.json"' EXIT
+          printf '%s\n' "$SECRET" > "$HOME/.moon/credentials.json"
+          moon publish
+        env:
+          SECRET: ${{ secrets.MOONCAKES_MOONBIT_COMMUNITY_TOKEN }}
