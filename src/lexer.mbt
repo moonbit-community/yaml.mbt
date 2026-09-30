@@ -2314,7 +2314,7 @@ fn Lexer::skip_to_next_token(self : Lexer) -> Unit raise YamlError {
         self.col < self.indent => {
         ignore(self.skip_ws_to_eol(SkipTabs::Yes))
         // If we have content on that line with a tab, return an error.
-        if self.char().is_breakz() {
+        if !self.char().is_breakz() {
           raise YamlError::YamlError(
             mark=self.get_marker(),
             info="tabs disallowed within this context (block indentation)",
