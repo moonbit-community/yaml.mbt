@@ -995,11 +995,11 @@ fn Lexer::resolve_flow_scalar_escape_sequence(
     'b' => ret = '\u{08}'
     't' | '\t' => ret = '\t'
     'n' => ret = '\n'
-    'v' => ret = '\u{11}'
-    'f' => ret = '\u{12}'
-    'r' => ret = '\u{13}'
-    'e' => ret = '\u{27}'
-    ' ' => ret = '\u{32}'
+    'v' => ret = '\u{0B}'
+    'f' => ret = '\u{0C}'
+    'r' => ret = '\r'
+    'e' => ret = '\u{1B}'
+    ' ' => ret = ' '
     '"' => ret = '"'
     '/' => ret = '/'
     '\\' => ret = '\\'
@@ -2314,7 +2314,7 @@ fn Lexer::skip_to_next_token(self : Lexer) -> Unit raise YamlError {
         self.col < self.indent => {
         ignore(self.skip_ws_to_eol(SkipTabs::Yes))
         // If we have content on that line with a tab, return an error.
-        if self.char().is_breakz() {
+        if !self.char().is_breakz() {
           raise YamlError::YamlError(
             mark=self.get_marker(),
             info="tabs disallowed within this context (block indentation)",

@@ -594,7 +594,7 @@ test "G4RS: Quoted Scalars" {
   json_inspect(docs[0], content={
     "unicode": "Sosa did fine.☺",
     "control": "\b1998\t1999\t2000\n",
-    "hex esc": "\r\n is \u0013\n",
+    "hex esc": "\r\n is \r\n",
     "single": "\"Howdy!\" he cried.",
     "quoted": " # Not a 'comment'.",
     "tie-fighter": "|\\-*-/|",

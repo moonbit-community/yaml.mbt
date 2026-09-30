@@ -186,8 +186,9 @@ fn Parser::parse(self : Parser) -> (Event, Marker) raise YamlError {
 /// If `multi` is set to `true`, the parser will allow parsing of multiple YAML documents
 /// inside the stream.
 ///
-/// Note that any `EventReceiver` is also a `MarkedEventReceiver`, so implementing the
-/// former is enough to call this function.
+/// The receiver must implement `MarkedEventReceiver`. An `EventReceiver` can be used by
+/// wrapping it in a type that implements `MarkedEventReceiver` and forwards each event,
+/// ignoring its marker.
 /// # Errors
 /// Returns `YamlError` when loading fails.
 pub fn[R : MarkedEventReceiver] Parser::load(
