@@ -81,12 +81,12 @@ fn Event::empty_scalar_with_anchor(anchor : Int, tag : Tag?) -> Event {
 ///   Scalar("f", ..), SequenceStart, Scalar("g", ..), Scalar("h", ..), SequenceEnd,
 /// MappingEnd, DocumentEnd, StreamEnd
 /// ```
-pub trait EventReceiver {
+pub(open) trait EventReceiver {
   /// Handler called for each YAML event that is emitted by the parser.
   fn on_event(Self, event : Event) -> Unit
 }
 
 ///|
-pub trait MarkedEventReceiver {
+pub(open) trait MarkedEventReceiver {
   fn on_event(Self, event : Event, _mark : Marker) -> Unit
 }

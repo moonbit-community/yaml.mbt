@@ -75,10 +75,10 @@ pub fn YamlEmitter::to_string(Self) -> String
 // Type aliases
 
 // Traits
-pub trait EventReceiver {
+pub(open) trait EventReceiver {
   fn on_event(Self, Event) -> Unit
 }
 
-pub trait MarkedEventReceiver {
+pub(open) trait MarkedEventReceiver {
   fn on_event(Self, Event, Marker) -> Unit
 }
