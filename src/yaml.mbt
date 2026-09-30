@@ -185,7 +185,7 @@ fn YamlLoader::on_event_impl(
     Event::Scalar(value~, style~, id~, tag~) => {
       let node = if style != TScalarStyle::Plain {
         Yaml::String(value)
-      } else if tag is Some({ handle, suffix }) {
+      } else if tag is Some({ handle, suffix, }) {
         if handle == "tag:yaml.org,2002:" {
           match suffix {
             "bool" =>
