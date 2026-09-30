@@ -59,3 +59,36 @@ test "external event receiver" {
     ),
   )
 }
+
+///|
+/// A receiver outside the package that only wants events, not markers.
+struct Counter {
+  mut scalars : Int
+}
+
+///|
+impl EventReceiver for Counter with fn on_event(self, event) {
+  if event is Scalar(..) {
+    self.scalars += 1
+  }
+}
+
+///|
+/// `Parser::load` takes a `MarkedEventReceiver`: an `EventReceiver` is used
+/// through a wrapper that forwards events and drops the markers.
+struct Unmarked {
+  inner : Counter
+}
+
+///|
+impl MarkedEventReceiver for Unmarked with fn on_event(self, event, _mark) {
+  EventReceiver::on_event(self.inner, event)
+}
+
+///|
+test "external unmarked event receiver" {
+  let counter = { scalars: 0, }
+  let parser = Parser::new("a: 1\nb: [2, 3]\n")
+  parser.load({ inner: counter, }, false)
+  inspect(counter.scalars, content="5")
+}

@@ -43,8 +43,10 @@ fn Event::empty_scalar_with_anchor(anchor : Int, tag : Tag?) -> Event {
 /// The low-level parsing API is event-based (a push parser), calling `EventReceiver::on_event`
 /// for each YAML `Event` that occurs.
 /// The `EventReceiver` trait only receives events. In order to receive both events and their
-/// location in the source, use `MarkedEventReceiver`. Note that `EventReceiver`s implement
-/// `MarkedEventReceiver` automatically.
+/// location in the source, use `MarkedEventReceiver`. `Parser::load` takes a
+/// `MarkedEventReceiver`; MoonBit has no blanket implementations, so to use an
+/// `EventReceiver` there, wrap it in a type whose `MarkedEventReceiver::on_event`
+/// forwards the event and ignores the marker.
 ///
 /// # Event hierarchy
 /// The event stream starts with an `Event::StreamStart` event followed by an
