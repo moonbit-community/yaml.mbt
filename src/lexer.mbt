@@ -124,7 +124,7 @@ priv struct SimpleKey {
 
 ///|
 fn SimpleKey::new(mark : Marker) -> SimpleKey {
-  SimpleKey::{ possible: false, required: false, token_number: 0, mark }
+  SimpleKey::{ possible: false, required: false, token_number: 0, mark, }
 }
 
 ///|
@@ -271,7 +271,7 @@ fn Lexer::get_error(self : Lexer) -> YamlError? {
 ///|
 /// Get current position (`index`, `line`, `col`) as a `Marker`.
 fn Lexer::get_marker(self : Lexer) -> Marker {
-  Marker::{ index: self.index, line: self.line, col: self.col }
+  Marker::{ index: self.index, line: self.line, col: self.col, }
 }
 
 ///|
@@ -570,7 +570,7 @@ fn Lexer::fetch_stream_start(self : Lexer) -> Unit {
     marker: mark,
     token_type: TokenType::StreamStart,
   })
-  self.simple_keys.push(SimpleKey::new(Marker::{ index: 0, line: 0, col: 0 }))
+  self.simple_keys.push(SimpleKey::new(Marker::{ index: 0, line: 0, col: 0, }))
 }
 
 ///|
@@ -1425,7 +1425,7 @@ fn Lexer::scan_tag(self : Lexer) -> Token raise YamlError {
   if self.look_char().is_blank_or_breakz() ||
     (self.flow_level > 0 && self.char().is_flow()) {
     // XXX: ex 7.2, an empty scalar can follow a secondary tag
-    Token::{ marker: start_mark, token_type: TokenType::Tag(handle~, suffix~) }
+    Token::{ marker: start_mark, token_type: TokenType::Tag(handle~, suffix~), }
   } else {
     raise YamlError::YamlError(
       mark=start_mark,
@@ -1523,7 +1523,10 @@ fn Lexer::scan_anchor(self : Lexer, is_alias : Bool) -> Token raise YamlError {
     )
   }
   if is_alias {
-    Token::{ marker: start_mark, token_type: TokenType::Alias(buf.to_string()) }
+    Token::{
+      marker: start_mark,
+      token_type: TokenType::Alias(buf.to_string()),
+    }
   } else {
     Token::{
       marker: start_mark,
@@ -1551,7 +1554,7 @@ fn Lexer::fetch_value(self : Lexer) -> Unit raise YamlError {
   }
   if sk.possible {
     // insert simple key
-    let tok = Token::{ marker: sk.mark, token_type: TokenType::Key }
+    let tok = Token::{ marker: sk.mark, token_type: TokenType::Key, }
     self.insert_token(sk.token_number - self.tokens_parsed, tok)
     if self.implicit_flow_mapping {
       if sk.mark.line < start_mark.line {
@@ -1714,7 +1717,7 @@ fn Lexer::fetch_block_entry(self : Lexer) -> Unit raise YamlError {
   }
 
   // ???, fixes test G9HC.
-  if self.tokens.back() is Some({ marker, token_type: Anchor(_) | Tag(_) }) {
+  if self.tokens.back() is Some({ marker, token_type: Anchor(_) | Tag(_), }) {
     if self.col == 0 && marker.col == 0 && self.indent > -1 {
       raise YamlError::YamlError(
         mark=marker,
@@ -1778,7 +1781,7 @@ fn Lexer::roll_indent(
     }
   }
   if self.indent < col {
-    self.indents.push(Indent::{ indent: self.indent, needs_block_end: true })
+    self.indents.push(Indent::{ indent: self.indent, needs_block_end: true, })
     self.indent = col
     let tokens_parsed = self.tokens_parsed
     match number {
@@ -1787,7 +1790,7 @@ fn Lexer::roll_indent(
           marker: mark,
           token_type: tok,
         })
-      None => self.tokens.push_back(Token::{ marker: mark, token_type: tok })
+      None => self.tokens.push_back(Token::{ marker: mark, token_type: tok, })
     }
   }
 }
@@ -1829,7 +1832,7 @@ fn Lexer::fetch_flow_collection_end(
   if self.flow_level > 0 {
     self.adjacent_value_allowed_at = self.index
   }
-  self.tokens.push_back(Token::{ marker: start_mark, token_type: tok })
+  self.tokens.push_back(Token::{ marker: start_mark, token_type: tok, })
 }
 
 ///|
@@ -1868,12 +1871,12 @@ fn Lexer::fetch_flow_collection_start(
     self.flow_mapping_started = true
   }
   ignore(self.skip_ws_to_eol(SkipTabs::Yes))
-  self.tokens.push_back(Token::{ marker: start_mark, token_type: tok })
+  self.tokens.push_back(Token::{ marker: start_mark, token_type: tok, })
 }
 
 ///|
 fn Lexer::increase_flow_level(self : Lexer) -> Unit raise YamlError {
-  self.simple_keys.push(SimpleKey::new(Marker::{ index: 0, line: 0, col: 0 }))
+  self.simple_keys.push(SimpleKey::new(Marker::{ index: 0, line: 0, col: 0, }))
   self.flow_level = if self.flow_level < 0xFF {
     self.flow_level + 1
   } else {
@@ -1893,7 +1896,7 @@ fn Lexer::increase_flow_level(self : Lexer) -> Unit raise YamlError {
 fn Lexer::roll_one_col_indent(self : Lexer) -> Unit {
   if self.flow_level == 0 &&
     self.indents.last().map_or(false, indent => indent.needs_block_end) {
-    self.indents.push(Indent::{ indent: self.indent, needs_block_end: false })
+    self.indents.push(Indent::{ indent: self.indent, needs_block_end: false, })
     self.indent += 1
   }
 }
@@ -1923,7 +1926,7 @@ fn Lexer::fetch_document_indicator(
   self.disallow_simple_key()
   let mark = self.get_marker()
   self.skip_n_non_blank(3)
-  self.tokens.push_back(Token::{ marker: mark, token_type: t })
+  self.tokens.push_back(Token::{ marker: mark, token_type: t, })
 }
 
 ///|

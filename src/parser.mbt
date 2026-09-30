@@ -359,12 +359,12 @@ fn Parser::flow_mapping_key(
     self.skip()
   }
   let marker = match self.peek_token() {
-    { marker, token_type: TokenType::FlowMappingEnd } => marker
-    { marker, token_type: _ } => {
+    { marker, token_type: TokenType::FlowMappingEnd, } => marker
+    { marker, token_type: _, } => {
       if !first {
         match self.peek_token() {
-          { marker: _, token_type: TokenType::FlowEntry } => self.skip()
-          { marker, token_type: _ } =>
+          { marker: _, token_type: TokenType::FlowEntry, } => self.skip()
+          { marker, token_type: _, } =>
             raise YamlError::YamlError(
               mark=marker,
               info="while parsing a flow mapping, did not find expected ',' or '}'",
@@ -372,7 +372,7 @@ fn Parser::flow_mapping_key(
         }
       }
       match self.peek_token() {
-        { marker: _, token_type: TokenType::Key } => {
+        { marker: _, token_type: TokenType::Key, } => {
           self.skip()
           if self.peek_token()
             is {
@@ -387,11 +387,11 @@ fn Parser::flow_mapping_key(
           self.push_state(State::FlowMappingValue)
           return self.parse_node(false, false)
         }
-        { marker: _, token_type: TokenType::Value } => {
+        { marker: _, token_type: TokenType::Value, } => {
           self.state = State::FlowMappingValue
           return (Event::empty_scalar(), marker)
         }
-        { marker: _, token_type: TokenType::FlowMappingEnd } => ()
+        { marker: _, token_type: TokenType::FlowMappingEnd, } => ()
         _ => {
           self.push_state(State::FlowMappingEmptyValue)
           return self.parse_node(false, false)
@@ -412,12 +412,12 @@ fn Parser::flow_mapping_value(
 ) -> (Event, Marker) raise YamlError {
   let marker = {
     if empty {
-      let { marker, token_type: _ } = self.peek_token()
+      let { marker, token_type: _, } = self.peek_token()
       self.state = State::FlowMappingKey
       return (Event::empty_scalar(), marker)
     }
     match self.peek_token() {
-      { marker, token_type: TokenType::Value } => {
+      { marker, token_type: TokenType::Value, } => {
         self.skip()
         match self.peek_token().token_type {
           TokenType::FlowEntry | TokenType::FlowMappingEnd => ()
@@ -428,7 +428,7 @@ fn Parser::flow_mapping_value(
         }
         marker
       }
-      { marker, token_type: _ } => marker
+      { marker, token_type: _, } => marker
     }
   }
   self.state = State::FlowMappingKey
@@ -446,7 +446,7 @@ fn Parser::block_mapping_key(
     self.skip()
   }
   match self.peek_token() {
-    { marker: _, token_type: TokenType::Key } => {
+    { marker: _, token_type: TokenType::Key, } => {
       self.skip()
       if self.peek_token()
         is {
@@ -463,16 +463,16 @@ fn Parser::block_mapping_key(
       }
     }
     // libyaml failed to parse spec 1.2, ex8.18
-    { marker, token_type: TokenType::Value } => {
+    { marker, token_type: TokenType::Value, } => {
       self.state = State::BlockMappingValue
       (Event::empty_scalar(), marker)
     }
-    { marker, token_type: TokenType::BlockEnd } => {
+    { marker, token_type: TokenType::BlockEnd, } => {
       self.pop_state()
       self.skip()
       (Event::MappingEnd, marker)
     }
-    { marker, token_type: _ } =>
+    { marker, token_type: _, } =>
       raise YamlError::YamlError(
         mark=marker,
         info="while parsing a block mapping, did not find expected key",
@@ -485,7 +485,7 @@ fn Parser::block_mapping_value(
   self : Parser,
 ) -> (Event, Marker) raise YamlError {
   match self.peek_token() {
-    { marker: _, token_type: TokenType::Value } => {
+    { marker: _, token_type: TokenType::Value, } => {
       self.skip()
       if self.peek_token()
         is {
@@ -501,7 +501,7 @@ fn Parser::block_mapping_value(
         self.parse_node(true, true)
       }
     }
-    { marker, token_type: _ } => {
+    { marker, token_type: _, } => {
       self.state = State::BlockMappingKey
       (Event::empty_scalar(), marker)
     }
@@ -519,13 +519,13 @@ fn Parser::flow_sequence_entry(
     self.skip()
   }
   match self.peek_token() {
-    { marker, token_type: TokenType::FlowSequenceEnd } => {
+    { marker, token_type: TokenType::FlowSequenceEnd, } => {
       self.pop_state()
       self.skip()
       return (Event::SequenceEnd, marker)
     }
-    { marker: _, token_type: TokenType::FlowEntry } if !first => self.skip()
-    { marker, token_type: _ } if !first =>
+    { marker: _, token_type: TokenType::FlowEntry, } if !first => self.skip()
+    { marker, token_type: _, } if !first =>
       raise YamlError::YamlError(
         mark=marker,
         info="while parsing a flow sequence, expected ',' or ']'",
@@ -533,12 +533,12 @@ fn Parser::flow_sequence_entry(
     _ => ()
   }
   match self.peek_token() {
-    { marker, token_type: TokenType::FlowSequenceEnd } => {
+    { marker, token_type: TokenType::FlowSequenceEnd, } => {
       self.pop_state()
       self.skip()
       (Event::SequenceEnd, marker)
     }
-    { marker, token_type: TokenType::Key } => {
+    { marker, token_type: TokenType::Key, } => {
       self.state = State::FlowSequenceEntryMappingKey
       self.skip()
       (Event::MappingStart(id=0, tag=None), marker)
@@ -575,7 +575,7 @@ fn Parser::flow_sequence_entry_mapping_value(
   self : Parser,
 ) -> (Event, Marker) raise YamlError {
   match self.peek_token() {
-    { marker: _, token_type: TokenType::Value } => {
+    { marker: _, token_type: TokenType::Value, } => {
       self.skip()
       self.state = State::FlowSequenceEntryMappingValue
       if self.peek_token()
@@ -591,7 +591,7 @@ fn Parser::flow_sequence_entry_mapping_value(
         self.parse_node(false, false)
       }
     }
-    { marker, token_type: _ } => {
+    { marker, token_type: _, } => {
       self.state = State::FlowSequenceEntryMappingEnd
       (Event::empty_scalar(), marker)
     }
@@ -609,8 +609,8 @@ fn Parser::indentless_sequence_entry(
   self : Parser,
 ) -> (Event, Marker) raise YamlError {
   match self.peek_token() {
-    { marker: _, token_type: TokenType::BlockEntry } => ()
-    { marker, token_type: _ } => {
+    { marker: _, token_type: TokenType::BlockEntry, } => ()
+    { marker, token_type: _, } => {
       self.pop_state()
       return (Event::SequenceEnd, marker)
     }
@@ -643,15 +643,15 @@ fn Parser::block_sequence_entry(
     self.skip()
   }
   match self.peek_token() {
-    { marker, token_type: TokenType::BlockEnd } => {
+    { marker, token_type: TokenType::BlockEnd, } => {
       self.pop_state()
       self.skip()
       (Event::SequenceEnd, marker)
     }
-    { marker: _, token_type: TokenType::BlockEntry } => {
+    { marker: _, token_type: TokenType::BlockEntry, } => {
       self.skip()
       if self.peek_token()
-        is { marker, token_type: TokenType::BlockEntry | TokenType::BlockEnd } {
+        is { marker, token_type: TokenType::BlockEntry | TokenType::BlockEnd, } {
         self.state = State::BlockSequenceEntry
         (Event::empty_scalar(), marker)
       } else {
@@ -659,7 +659,7 @@ fn Parser::block_sequence_entry(
         self.parse_node(true, false)
       }
     }
-    { marker, token_type: _ } =>
+    { marker, token_type: _, } =>
       raise YamlError::YamlError(
         mark=marker,
         info="while parsing a block collection, did not find expected '-' indicator",
@@ -671,12 +671,12 @@ fn Parser::block_sequence_entry(
 fn Parser::document_end(self : Parser) -> (Event, Marker) raise YamlError {
   let mut explicit_end = false
   let marker = match self.peek_token() {
-    { marker, token_type: TokenType::DocumentEnd } => {
+    { marker, token_type: TokenType::DocumentEnd, } => {
       explicit_end = true
       self.skip()
       marker
     }
-    { marker, token_type: _ } => marker
+    { marker, token_type: _, } => marker
   }
   if !self.keep_tags {
     self.tags.clear()
@@ -728,9 +728,9 @@ fn Parser::parse_node(
   let mut anchor_id = 0
   let mut tag = None
   match self.peek_token() {
-    { marker: _, token_type: TokenType::Alias(_) } => {
+    { marker: _, token_type: TokenType::Alias(_), } => {
       self.pop_state()
-      if self.fetch_token() is { marker, token_type: TokenType::Alias(name) } {
+      if self.fetch_token() is { marker, token_type: TokenType::Alias(name), } {
         match self.anchors.get(name) {
           None =>
             raise YamlError::YamlError(
@@ -742,8 +742,8 @@ fn Parser::parse_node(
       }
       panic()
     }
-    { marker: _, token_type: TokenType::Anchor(_) } =>
-      if self.fetch_token() is { marker, token_type: TokenType::Anchor(name) } {
+    { marker: _, token_type: TokenType::Anchor(_), } =>
+      if self.fetch_token() is { marker, token_type: TokenType::Anchor(name), } {
         anchor_id = self.register_anchor(name, marker)
         if self.peek_token().token_type is TokenType::Tag(..) {
           if self.fetch_token().token_type is TokenType::Tag(handle~, suffix~) {
@@ -755,12 +755,12 @@ fn Parser::parse_node(
       } else {
         panic()
       }
-    { marker, token_type: TokenType::Tag(..) } =>
+    { marker, token_type: TokenType::Tag(..), } =>
       if self.fetch_token().token_type is TokenType::Tag(handle~, suffix~) {
         tag = Some(self.resolve_tag(marker, handle, suffix))
         if self.peek_token().token_type is TokenType::Anchor(_) {
           if self.fetch_token()
-            is { marker, token_type: TokenType::Anchor(name) } {
+            is { marker, token_type: TokenType::Anchor(name), } {
             anchor_id = self.register_anchor(name, marker)
           } else {
             panic()
@@ -772,41 +772,41 @@ fn Parser::parse_node(
     _ => ()
   }
   match self.peek_token() {
-    { marker, token_type: TokenType::BlockEntry } if indentless_sequence => {
+    { marker, token_type: TokenType::BlockEntry, } if indentless_sequence => {
       self.state = State::IndentlessSequenceEntry
       (Event::SequenceStart(id=anchor_id, tag~), marker)
     }
-    { marker: _, token_type: TokenType::Scalar(_) } => {
+    { marker: _, token_type: TokenType::Scalar(_), } => {
       self.pop_state()
       if self.fetch_token()
-        is { marker, token_type: TokenType::Scalar(style, value) } {
+        is { marker, token_type: TokenType::Scalar(style, value), } {
         (Event::Scalar(value~, style~, id=anchor_id, tag~), marker)
       } else {
         panic()
       }
     }
-    { marker, token_type: TokenType::FlowSequenceStart } => {
+    { marker, token_type: TokenType::FlowSequenceStart, } => {
       self.state = State::FlowSequenceFirstEntry
       (Event::SequenceStart(id=anchor_id, tag~), marker)
     }
-    { marker, token_type: TokenType::FlowMappingStart } => {
+    { marker, token_type: TokenType::FlowMappingStart, } => {
       self.state = State::FlowMappingFirstKey
       (Event::MappingStart(id=anchor_id, tag~), marker)
     }
-    { marker, token_type: TokenType::BlockSequenceStart } if block => {
+    { marker, token_type: TokenType::BlockSequenceStart, } if block => {
       self.state = State::BlockSequenceFirstEntry
       (Event::SequenceStart(id=anchor_id, tag~), marker)
     }
-    { marker, token_type: TokenType::BlockMappingStart } if block => {
+    { marker, token_type: TokenType::BlockMappingStart, } if block => {
       self.state = State::BlockMappingFirstKey
       (Event::MappingStart(id=anchor_id, tag~), marker)
     }
     // ex 7.2, an empty scalar can follow a secondary tag
-    { marker, token_type: _ } if tag is Some(_) || anchor_id > 0 => {
+    { marker, token_type: _, } if tag is Some(_) || anchor_id > 0 => {
       self.pop_state()
       (Event::empty_scalar_with_anchor(anchor_id, tag), marker)
     }
-    { marker, token_type: _ } =>
+    { marker, token_type: _, } =>
       raise YamlError::YamlError(
         mark=marker,
         info="while parsing a node, did not find expected node content",
@@ -826,20 +826,20 @@ fn Parser::resolve_tag(
     // "!!" is a shorthand for "tag:yaml.org,2002:". However, that default can be
     // overridden.
     match self.tags.get("!!") {
-      Some(prefix) => Tag::{ handle: prefix, suffix }
-      None => Tag::{ handle: "tag:yaml.org,2002:", suffix }
+      Some(prefix) => Tag::{ handle: prefix, suffix, }
+      None => Tag::{ handle: "tag:yaml.org,2002:", suffix, }
     }
   } else if handle.is_empty() && suffix == "!" {
     // "!" introduces a local tag. Local tags may have their prefix overridden.
     match self.tags.get("") {
-      Some(prefix) => Tag::{ handle: prefix, suffix }
-      None => Tag::{ handle: "", suffix }
+      Some(prefix) => Tag::{ handle: prefix, suffix, }
+      None => Tag::{ handle: "", suffix, }
     }
   } else {
     // Lookup handle in our tag directives.
     let prefix = self.tags.get(handle)
     if prefix is Some(prefix) {
-      Tag::{ handle: prefix, suffix }
+      Tag::{ handle: prefix, suffix, }
       // Otherwise, it may be a local handle. With a local handle, the handle is set to
       // "!" and the suffix to whatever follows it ("!foo" -> ("!", "foo")).
       // If the handle is of the form "!foo!", this cannot be a local handle and we need
@@ -849,7 +849,7 @@ fn Parser::resolve_tag(
       handle.has_suffix("!") {
       raise YamlError::YamlError(mark~, info="the handle wasn't declared")
     } else {
-      Tag::{ handle, suffix }
+      Tag::{ handle, suffix, }
     }
   }
 }
@@ -887,7 +887,7 @@ fn Parser::document_start(
     self.skip()
   }
   match self.peek_token() {
-    { marker, token_type: TokenType::StreamEnd } => {
+    { marker, token_type: TokenType::StreamEnd, } => {
       self.state = State::End
       self.skip()
       (Event::StreamEnd, marker)
@@ -921,7 +921,7 @@ fn Parser::explicit_document_start(
 ) -> (Event, Marker) raise YamlError {
   self.parser_process_directives()
   match self.peek_token() {
-    { marker, token_type: TokenType::DocumentStart } => {
+    { marker, token_type: TokenType::DocumentStart, } => {
       self.push_state(State::DocumentEnd)
       self.state = State::DocumentContent
       self.skip()
@@ -941,7 +941,7 @@ fn Parser::parser_process_directives(self : Parser) -> Unit raise YamlError {
   while true {
     let tags = @hashmap.HashMap([])
     match self.peek_token() {
-      { marker, token_type: TokenType::VersionDirective(..) } => {
+      { marker, token_type: TokenType::VersionDirective(..), } => {
         // XXX parsing with warning according to spec
         if version_directive_received {
           raise YamlError::YamlError(
@@ -951,7 +951,7 @@ fn Parser::parser_process_directives(self : Parser) -> Unit raise YamlError {
         }
         version_directive_received = true
       }
-      { marker, token_type: TokenType::TagDirective(handle~, prefix~) } => {
+      { marker, token_type: TokenType::TagDirective(handle~, prefix~), } => {
         if tags.contains(handle) {
           raise YamlError::YamlError(
             mark=marker,
@@ -970,7 +970,7 @@ fn Parser::parser_process_directives(self : Parser) -> Unit raise YamlError {
 ///|
 fn Parser::stream_start(self : Parser) -> (Event, Marker) raise YamlError {
   match self.peek_token() {
-    { marker, token_type: TokenType::StreamStart } => {
+    { marker, token_type: TokenType::StreamStart, } => {
       self.state = State::ImplicitDocumentStart
       self.skip()
       (Event::StreamStart, marker)

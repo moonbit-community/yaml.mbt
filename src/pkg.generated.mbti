@@ -82,4 +82,3 @@ pub trait EventReceiver {
 pub trait MarkedEventReceiver {
   fn on_event(Self, Event, Marker) -> Unit
 }
-

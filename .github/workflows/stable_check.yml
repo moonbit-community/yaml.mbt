@@ -5,6 +5,11 @@ on:
     branches:
       - main   
   pull_request:
+  # a toolchain update can change `moon fmt`/`moon info` output with no push
+  # to this repository, so check main weekly as well
+  schedule:
+    - cron: "0 3 * * 1"
+  workflow_dispatch:
 
 jobs:
   check:
@@ -29,7 +34,7 @@ jobs:
           moon update
 
       - name: moon check
-        run: moon check
+        run: moon check --target all
 
       - name: format diff
         run: |
