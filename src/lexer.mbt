@@ -250,9 +250,9 @@ fn Lexer::new(input : StringView) -> Lexer {
     stream_end_produced: false,
     adjacent_value_allowed_at: 0,
     simple_key_allowed: true,
-    simple_keys: Array::new(),
+    simple_keys: Array(),
     indent: -1,
-    indents: Array::new(),
+    indents: Array(),
     flow_level: 0,
     tokens_parsed: 0,
     token_available: false,
@@ -417,7 +417,7 @@ fn Lexer::read_break(self : Lexer, buf : StringBuilder) -> Unit {
 ///
 /// `Self::lookahead` must have been called before calling this function.
 fn Lexer::next_is_document_end(self : Lexer) -> Bool {
-  guard self.buffer.length() >= 4
+  guard! self.buffer.length() >= 4
   self.buffer[0] == '.' &&
   self.buffer[1] == '.' &&
   self.buffer[2] == '.' &&
@@ -429,7 +429,7 @@ fn Lexer::next_is_document_end(self : Lexer) -> Bool {
 ///
 /// `Self::lookahead` must have been called before calling this function.
 fn Lexer::next_is_document_indicator(self : Lexer) -> Bool {
-  guard self.buffer.length() >= 4
+  guard! self.buffer.length() >= 4
   self.col == 0 &&
   (
     (self.buffer[0] == '-' && self.buffer[1] == '-' && self.buffer[2] == '-') ||
@@ -441,7 +441,7 @@ fn Lexer::next_is_document_indicator(self : Lexer) -> Bool {
 ///|
 /// Insert a token at the given position.
 fn Lexer::insert_token(self : Lexer, pos : Int, token : Token) -> Unit {
-  guard pos <= self.tokens.length()
+  guard! pos <= self.tokens.length()
   self.tokens.insert(pos, token)
 }
 
@@ -650,10 +650,10 @@ fn Lexer::scan_plain_scalar(self : Lexer) -> Token raise YamlError {
       info="invalid indentation in flow construct",
     )
   }
-  let buf = StringBuilder::new(size_hint=32)
-  let leading_break = StringBuilder::new(size_hint=32)
-  let trailing_breaks = StringBuilder::new(size_hint=32)
-  let whitespaces = StringBuilder::new(size_hint=32)
+  let buf = StringBuilder(size_hint=32)
+  let leading_break = StringBuilder(size_hint=32)
+  let trailing_breaks = StringBuilder(size_hint=32)
+  let whitespaces = StringBuilder(size_hint=32)
   while true {
     self.lookahead(4)
     if self.next_is_document_indicator() || self.char() == '#' {
@@ -793,10 +793,10 @@ fn Lexer::scan_flow_scalar(
   single : Bool,
 ) -> Token raise YamlError {
   let start_mark = self.get_marker()
-  let buf = StringBuilder::new()
-  let leading_break = StringBuilder::new()
-  let trailing_breaks = StringBuilder::new()
-  let whitespaces = StringBuilder::new()
+  let buf = StringBuilder()
+  let leading_break = StringBuilder()
+  let trailing_breaks = StringBuilder()
+  let whitespaces = StringBuilder()
   let leading_blanks = Ref(false)
 
   // Eat the left quote.
@@ -1070,10 +1070,10 @@ fn Lexer::scan_block_scalar(
   let mut trailing_blank = false
   let mut leading_blank = false
   let style = if literal { TScalarStyle::Literal } else { TScalarStyle::Folded }
-  let buf = StringBuilder::new()
-  let leading_break = StringBuilder::new()
-  let trailing_breaks = StringBuilder::new()
-  let chomping_break = StringBuilder::new()
+  let buf = StringBuilder()
+  let leading_break = StringBuilder()
+  let trailing_breaks = StringBuilder()
+  let chomping_break = StringBuilder()
 
   // skip '|' or '>'
   self.skip_non_blank()
@@ -1178,7 +1178,7 @@ fn Lexer::scan_block_scalar(
       info="wrongly indented line in block scalar",
     )
   }
-  let line_buffer = StringBuilder::new(size_hint=100)
+  let line_buffer = StringBuilder(size_hint=100)
   let start_mark = self.get_marker()
   while self.col == indent.val && !self.char().is_z() {
     if indent.val == 0 {
@@ -1442,7 +1442,7 @@ fn Lexer::scan_tag_shorthand_suffix(
   head : String,
   mark : Marker,
 ) -> String raise YamlError {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
 
   // Copy the head if needed.
   // Note that we don't copy the leading '!' character.
@@ -1481,7 +1481,7 @@ fn Lexer::scan_verbatim_tag(
   // Eat `!<`
   self.skip_non_blank()
   self.skip_non_blank()
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   while self.look_char().is_uri_char() {
     if self.char() == '%' {
       buf.write_char(self.scan_uri_escapes(start_mark))
@@ -1509,7 +1509,7 @@ fn Lexer::fetch_anchor(self : Lexer, is_alias : Bool) -> Unit raise YamlError {
 
 ///|
 fn Lexer::scan_anchor(self : Lexer, is_alias : Bool) -> Token raise YamlError {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   let start_mark = self.get_marker()
   self.skip_non_blank()
   while self.look_char().is_anchor_char() {
@@ -2017,7 +2017,7 @@ fn Lexer::scan_tag_prefix(
   self : Lexer,
   start_mark : Marker,
 ) -> String raise YamlError {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   if self.look_char() == '!' {
     // If we have a local tag, insert and skip `!`.
     buf.write_char(self.char())
@@ -2106,7 +2106,7 @@ fn Lexer::scan_tag_handle(
   directive : Bool,
   mark : Marker,
 ) -> String raise YamlError {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   if self.look_char() != '!' {
     raise YamlError::YamlError(
       mark~,
@@ -2189,7 +2189,7 @@ fn Lexer::scan_version_directive_number(
 ///|
 fn Lexer::scan_directive_name(self : Lexer) -> String raise YamlError {
   let start_mark = self.get_marker()
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   while self.look_char().is_alpha() {
     buf.write_char(self.char())
     self.skip_non_blank()

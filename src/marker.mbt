@@ -7,3 +7,9 @@ pub struct Marker {
   /// The column (1-indexed).
   col : Int
 } derive(Debug, Eq)
+
+///|
+pub extend Marker with @moonbitlang/core/debug.Debug::{to_repr}
+
+///|
+pub extend Marker with Eq::{not_equal, equal}

@@ -3,7 +3,7 @@
 /// `\e` and `\ ` were mapped to the characters whose *decimal* codes are
 /// their hex codes (U+0011, U+0012, U+0013, U+0027 `'`, U+0032 `2`).
 test "double-quoted escapes" {
-  let docs = Yaml::load_from_string(
+  let docs = @yaml.Yaml::load_from_string(
     "- \"\\0\\a\\b\\t\\n\\v\\f\\r\\e\\ \\\"\\/\\\\\"\n- \"\\N\\_\\L\\P\\x41\\u00e9\\U0001F600\"",
   )
   guard docs[0] is Array([String(controls), String(unicode)]) else {

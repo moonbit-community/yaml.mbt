@@ -7,26 +7,26 @@ test "keep tags across multiple documents" {
     #|foo: "bar"
     #|--- !t!2 &2
     #|baz: "qux"
-  let parser = Parser::new(source)
+  let parser = @yaml.Parser::new(source)
   parser.keep_tags(true)
-  let docs = Yaml::load_from_parser(parser)
+  let docs = @yaml.Yaml::load_from_parser(parser)
   json_inspect(docs, content=[{ "foo": "bar" }, { "baz": "qux" }])
 }
 
 ///|
 test "empty doc" {
   let source = "---"
-  let docs = Yaml::load_from_string(source)
+  let docs = @yaml.Yaml::load_from_string(source)
   @debug.assert_eq(docs.length(), 1)
   let yaml = docs[0]
-  assert_true(yaml is Yaml::Null)
+  assert_true(yaml is @yaml.Yaml::Null)
   let source = ""
-  let docs = Yaml::load_from_string(source)
+  let docs = @yaml.Yaml::load_from_string(source)
   @debug.assert_eq(docs.length(), 0)
   let source = "&a"
-  let docs = Yaml::load_from_string(source)
+  let docs = @yaml.Yaml::load_from_string(source)
   let doc = docs[0]
-  assert_true(doc is Yaml::Null)
+  assert_true(doc is @yaml.Yaml::Null)
 }
 
 ///|
@@ -46,7 +46,7 @@ test "basic" {
     #|a5: 'single_quoted'
     #|a6: "double_quoted"
     #|a7: 你好
-  let docs = Yaml::load_from_string(source)
+  let docs = @yaml.Yaml::load_from_string(source)
   @debug.assert_eq(docs.length(), 1)
   let doc = docs[0]
   json_inspect(doc, content={
@@ -82,7 +82,7 @@ test "basic" {
     #|      damage: 50
     #|    - name: Staff
     #|      damage: 3
-  let docs = Yaml::load_from_string(source)
+  let docs = @yaml.Yaml::load_from_string(source)
   json_inspect(docs, content=[
     [
       {
@@ -121,7 +121,7 @@ test "multi doc" {
     #|'a scalar'
     #|---
     #|'a scalar'
-  let docs = Yaml::load_from_string(source)
+  let docs = @yaml.Yaml::load_from_string(source)
   @debug.assert_eq(docs.length(), 3)
 }
 
@@ -132,7 +132,7 @@ test "anchor" {
     #|    b1: 4
     #|    b2: d
     #|a2: *DEFAULT
-  let docs = Yaml::load_from_string(source)
+  let docs = @yaml.Yaml::load_from_string(source)
   let doc = docs[0]
   json_inspect(doc, content={
     "a1": { "b1": 4, "b2": "d" },
@@ -146,9 +146,10 @@ test "bad anchor" {
     #|a1: &DEFAULT
     #|    b1: 4
     #|    b2: *DEFAULT
-  let docs = Yaml::load_from_string(source)
+  let docs = @yaml.Yaml::load_from_string(source)
   let doc = docs[0]
-  guard doc is Yaml::Map(yaml_map) && yaml_map["a1"] is Yaml::Map(yaml_map) else {
+  guard doc is @yaml.Yaml::Map(yaml_map) &&
+    yaml_map["a1"] is @yaml.Yaml::Map(yaml_map) else {
     fail("\{doc.to_repr()}")
   }
   debug_inspect(yaml_map["b2"], content="BadValue")
@@ -158,12 +159,12 @@ test "bad anchor" {
 test "should throw error" {
   // bad hyphen
   let source = "{-"
-  @test.assert_raise(() => Yaml::load_from_string(source))
+  @test.assert_raise(() => @yaml.Yaml::load_from_string(source))
 
   // invalid trailing content after a double quoted string
   let source =
     #|"foo" l"
-  @test.assert_raise(() => Yaml::load_from_string(source))
+  @test.assert_raise(() => @yaml.Yaml::load_from_string(source))
 }
 
 ///|
@@ -173,7 +174,7 @@ test "comment after tag" {
     #|# This is a comment
     #|--- #-------
     #|foobar
-  let docs = Yaml::load_from_string(source)
+  let docs = @yaml.Yaml::load_from_string(source)
   json_inspect(docs, content=["foobar"])
 }
 
@@ -183,21 +184,21 @@ test "large block scalar indent" {
     #|a: |-
     #|                  a
     #|                      b
-  let docs = Yaml::load_from_string(source)
+  let docs = @yaml.Yaml::load_from_string(source)
   json_inspect(docs, content=[{ "a": "a\n    b" }])
 }
 
 ///|
 test "bad docstart" {
   json_inspect(
-    Yaml::load_from_string("---This used to cause an infinite loop"),
+    @yaml.Yaml::load_from_string("---This used to cause an infinite loop"),
     content=["---This used to cause an infinite loop"],
   )
-  json_inspect(Yaml::load_from_string("----"), content=["----"])
-  json_inspect(Yaml::load_from_string("--- #here goes a comment"), content=[
+  json_inspect(@yaml.Yaml::load_from_string("----"), content=["----"])
+  json_inspect(@yaml.Yaml::load_from_string("--- #here goes a comment"), content=[
     null,
   ])
-  json_inspect(Yaml::load_from_string("---- #here goes a comment"), content=[
+  json_inspect(@yaml.Yaml::load_from_string("---- #here goes a comment"), content=[
     "----",
   ])
 }
@@ -232,9 +233,9 @@ test "plain datatype" {
     #|- [ 0xF, 0xF ]
     #|- +12345
     #|- [ true, false ]
-  let docs = Yaml::load_from_string(source)
+  let docs = @yaml.Yaml::load_from_string(source)
   @debug.assert_eq(docs.length(), 1)
-  guard docs[0] is Yaml::Array(yaml_array) else {
+  guard docs[0] is @yaml.Yaml::Array(yaml_array) else {
     fail("expect yaml array but got \{docs[0].to_repr()}")
   }
   debug_inspect(
@@ -310,9 +311,9 @@ test "map order" {
     #|b: ~
     #|a: ~
     #|c: ~
-  let docs = Yaml::load_from_string(source)
+  let docs = @yaml.Yaml::load_from_string(source)
   @debug.assert_eq(docs.length(), 1)
-  guard docs[0] is Yaml::Map(map) else {
+  guard docs[0] is @yaml.Yaml::Map(map) else {
     fail("expect yaml map but got \{docs[0].to_repr()}")
   }
   json_inspect(map.iter().collect(), content=[
@@ -331,7 +332,7 @@ test "integer key" {
     #|1:
     #|    important: false
   debug_inspect(
-    @test.expect_error(() => Yaml::load_from_string(source)),
+    @test.expect_error(() => @yaml.Yaml::load_from_string(source)),
     content=(
       #|YamlError(
       #|  mark={ index: 0, line: 1, col: 0 },
@@ -347,22 +348,22 @@ test "indentation equality" {
     #|hash:
     #|    with:
     #|        indentations
-  let four_spaces = Yaml::load_from_string(four_spaces)
+  let four_spaces = @yaml.Yaml::load_from_string(four_spaces)
   let two_spaces =
     #|hash:
     #|  with:
     #|    indentations
-  let two_spaces = Yaml::load_from_string(two_spaces)
+  let two_spaces = @yaml.Yaml::load_from_string(two_spaces)
   let one_space =
     #|hash:
     #| with:
     #|  indentations
-  let one_space = Yaml::load_from_string(one_space)
+  let one_space = @yaml.Yaml::load_from_string(one_space)
   let mixed_spaces =
     #|hash:
     #|     with:
     #|               indentations
-  let mixed_spaces = Yaml::load_from_string(mixed_spaces)
+  let mixed_spaces = @yaml.Yaml::load_from_string(mixed_spaces)
   @debug.assert_eq(four_spaces, two_spaces)
   @debug.assert_eq(two_spaces, one_space)
   @debug.assert_eq(four_spaces, mixed_spaces)
@@ -380,7 +381,7 @@ test "two space indentations" {
     #|subcommands3:
     #| - server:
     #|    about: server related commands
-  let docs = Yaml::load_from_string(source)
+  let docs = @yaml.Yaml::load_from_string(source)
   json_inspect(docs, content=[
     {
       "subcommands": [{ "server": null, "about": "server related commands" }],
@@ -392,7 +393,7 @@ test "two space indentations" {
 
 ///|
 test "recursion depth check objects" {
-  let buf = StringBuilder::new(size_hint=4 * 2 * 10_000)
+  let buf = StringBuilder(size_hint=4 * 2 * 10_000)
   for _ in 0..<10_000 {
     buf.write_string("{a:")
   }
@@ -400,12 +401,12 @@ test "recursion depth check objects" {
     buf.write_string("}")
   }
   let source = buf.to_string()
-  @test.assert_raise(() => Yaml::load_from_string(source))
+  @test.assert_raise(() => @yaml.Yaml::load_from_string(source))
 }
 
 ///|
 test "recursion depth check arrays" {
-  let buf = StringBuilder::new(size_hint=2 * 2 * 10_000)
+  let buf = StringBuilder(size_hint=2 * 2 * 10_000)
   for _ in 0..<10_000 {
     buf.write_char('[')
   }
@@ -413,7 +414,7 @@ test "recursion depth check arrays" {
     buf.write_char(']')
   }
   let source = buf.to_string()
-  @test.assert_raise(() => Yaml::load_from_string(source))
+  @test.assert_raise(() => @yaml.Yaml::load_from_string(source))
 }
 
 ///|
@@ -421,7 +422,7 @@ test "mapping duplicates" {
   let source =
     #|a: foo
     #|a: bar
-  @test.assert_raise(() => Yaml::load_from_string(source))
+  @test.assert_raise(() => @yaml.Yaml::load_from_string(source))
 }
 
 ///|
@@ -434,7 +435,7 @@ test "nominal float parse" {
   // - +NAN
   // ```
   // Every single one of these values should be parsed as a string in yaml,
-  let buf = StringBuilder::new(size_hint=400)
+  let buf = StringBuilder(size_hint=400)
   let bases = ["nan", "NAN", "NaN", "inf", "infinity", "Infinity"]
   for base in bases {
     buf.write_string("- +\{base}\n")
@@ -442,13 +443,13 @@ test "nominal float parse" {
     buf.write_string("- \{base}\n")
   }
   let source = buf.to_string()
-  let docs = Yaml::load_from_string(source)
+  let docs = @yaml.Yaml::load_from_string(source)
   @debug.assert_eq(docs.length(), 1)
-  guard docs[0] is Yaml::Array(yaml_array) else {
+  guard docs[0] is @yaml.Yaml::Array(yaml_array) else {
     fail("expect yaml array but got \{docs[0].to_repr()}")
   }
   for yaml in yaml_array {
-    guard yaml is Yaml::String(_) else {
+    guard yaml is @yaml.Yaml::String(_) else {
       fail("expect a yaml string but got \{yaml.to_repr()}")
     }
   }
@@ -458,14 +459,14 @@ test "nominal float parse" {
 test "testcase from OpenAI OpenAPI" {
   let source =
     #|example: '[''This is a test.'']'
-  let docs = Yaml::load_from_string(source)
+  let docs = @yaml.Yaml::load_from_string(source)
   @debug.assert_eq(docs.length(), 1)
   json_inspect(docs[0], content={ "example": "['This is a test.']" })
 }
 
 ///|
 fn visual_to_raw(yaml : String) -> String {
-  let buf = StringBuilder::new(size_hint=yaml.length() * 2)
+  let buf = StringBuilder(size_hint=yaml.length() * 2)
   let mut pending_end_marker = false
   for ch in yaml.iter() {
     if pending_end_marker {
@@ -507,7 +508,7 @@ test "26DV: Whitespace around colon in mappings" {
     #|  scalar5
     #|top6:␣
     #|  &anchor6 'key6' : scalar6
-  let docs = Yaml::load_from_string(visual_to_raw(source))
+  let docs = @yaml.Yaml::load_from_string(visual_to_raw(source))
   json_inspect(docs, content=[
     {
       "top1": { "key1": "scalar1" },
@@ -525,7 +526,7 @@ test "ZH7C: Anchors in Mapping" {
   let source =
     #|&a a: b
     #|c: &d d
-  let docs = Yaml::load_from_string(source)
+  let docs = @yaml.Yaml::load_from_string(source)
   @debug.assert_eq(docs.length(), 1)
   json_inspect(docs[0], content={ "a": "b", "c": "d" })
 }
@@ -536,7 +537,7 @@ test "Z9M4: Global Tag Prefix" {
     #|%TAG !e! tag:example.com,2000:app/
     #|---
     #|- !e!foo "bar"
-  let docs = Yaml::load_from_string(source)
+  let docs = @yaml.Yaml::load_from_string(source)
   @debug.assert_eq(docs.length(), 1)
   json_inspect(docs[0], content=["bar"])
 }
@@ -550,7 +551,7 @@ test "M6YH: Block sequence indentation" {
     #| foo: bar
     #|-
     #| - 42
-  let docs = Yaml::load_from_string(source)
+  let docs = @yaml.Yaml::load_from_string(source)
   @debug.assert_eq(docs.length(), 1)
   json_inspect(docs[0], content=["x\n", { "foo": "bar" }, [42]])
 }
@@ -561,7 +562,7 @@ test "LQZ7: Double Quoted Implicit Keys" {
     #|"implicit block key" : [
     #|  "implicit flow key" : value,
     #| ]
-  let docs = Yaml::load_from_string(source)
+  let docs = @yaml.Yaml::load_from_string(source)
   @debug.assert_eq(docs.length(), 1)
   json_inspect(docs[0], content={
     "implicit block key": [{ "implicit flow key": "value" }],
@@ -574,7 +575,7 @@ test "HMQ5: Node Properties" {
     #|!!str &a1 "foo":
     #|  !!str bar
     #|&a2 baz : *a1
-  let docs = Yaml::load_from_string(source)
+  let docs = @yaml.Yaml::load_from_string(source)
   @debug.assert_eq(docs.length(), 1)
   json_inspect(docs[0], content={ "foo": "bar", "baz": "foo" })
 }
@@ -589,7 +590,7 @@ test "G4RS: Quoted Scalars" {
     #|single: '"Howdy!" he cried.'
     #|quoted: ' # Not a ''comment''.'
     #|tie-fighter: '|\-*-/|'
-  let docs = Yaml::load_from_string(source)
+  let docs = @yaml.Yaml::load_from_string(source)
   @debug.assert_eq(docs.length(), 1)
   json_inspect(docs[0], content={
     "unicode": "Sosa did fine.☺",
@@ -611,7 +612,7 @@ test "HMK4: Indentation determines scope" {
     #|    stats: |
     #|      65 Home Runs
     #|      0.278 Batting Average
-  let docs = Yaml::load_from_string(source)
+  let docs = @yaml.Yaml::load_from_string(source)
   @debug.assert_eq(docs.length(), 1)
   json_inspect(docs[0], content={
     "name": "Mark McGwire",
@@ -642,7 +643,7 @@ test "F8F9: Chomping Trailing Lines" {
     #|
     #| # Trail
     #|  # comments.
-  let docs = Yaml::load_from_string(visual_to_raw(source))
+  let docs = @yaml.Yaml::load_from_string(visual_to_raw(source))
   @debug.assert_eq(docs.length(), 1)
   json_inspect(docs[0], content={
     "strip": "# text",
@@ -658,7 +659,7 @@ test "A2M4: Indentation Indicators" {
     #|: -»b
     #|  -  -—»c
     #|     - d
-  let docs = Yaml::load_from_string(visual_to_raw(source))
+  let docs = @yaml.Yaml::load_from_string(visual_to_raw(source))
   @debug.assert_eq(docs.length(), 1)
   json_inspect(docs[0], content={ "a": ["b", ["c", "d"]] })
 }
@@ -670,7 +671,7 @@ test "9BXH: Multiline doublequoted flow mapping key without value" {
     #|- { "single line", a: b}
     #|- { "multi
     #|  line", a: b}
-  let docs = Yaml::load_from_string(source)
+  let docs = @yaml.Yaml::load_from_string(source)
   @debug.assert_eq(docs.length(), 1)
   json_inspect(docs[0], content=[
     { "single line": null, "a": "b" },
@@ -689,7 +690,7 @@ test "8UDB: Flow Sequence Entries" {
     #| text, [ nested ],
     #|single: pair,
     #|]
-  let docs = Yaml::load_from_string(source)
+  let docs = @yaml.Yaml::load_from_string(source)
   @debug.assert_eq(docs.length(), 1)
   json_inspect(docs[0], content=[
     "double quoted",
@@ -712,7 +713,7 @@ test "DWX9: Literal Content" {
     #|  text
     #|
     #| # Comment
-  let docs = Yaml::load_from_string(visual_to_raw(source))
+  let docs = @yaml.Yaml::load_from_string(visual_to_raw(source))
   @debug.assert_eq(docs.length(), 1)
   json_inspect(docs[0], content="\n\nliteral\n \n\ntext\n")
 }
@@ -723,7 +724,7 @@ test "EXG3: Three dashes and content without space" {
     #|---
     #|---word1
     #|word2
-  let docs = Yaml::load_from_string(visual_to_raw(source))
+  let docs = @yaml.Yaml::load_from_string(visual_to_raw(source))
   @debug.assert_eq(docs.length(), 1)
   json_inspect(docs[0], content="---word1 word2")
 }
@@ -733,7 +734,7 @@ test "R52L: Nested flow mapping sequence and mappings" {
   let source =
     #|---
     #|{ top1: [item1, {key2: value2}, item3], top2: value2 }
-  let docs = Yaml::load_from_string(source)
+  let docs = @yaml.Yaml::load_from_string(source)
   @debug.assert_eq(docs.length(), 1)
   json_inspect(docs[0], content={
     "top1": ["item1", { "key2": "value2" }, "item3"],
@@ -748,7 +749,7 @@ test "RLU9: Sequence Indent" {
     #|- 42
     #|bar:
     #|  - 44
-  let docs = Yaml::load_from_string(source)
+  let docs = @yaml.Yaml::load_from_string(source)
   @debug.assert_eq(docs.length(), 1)
   json_inspect(docs[0], content={ "foo": [42], "bar": [44] })
 }
@@ -761,7 +762,7 @@ test "SKE5: Anchor before zero indented sequence" {
     #| &anchor
     #|- a
     #|- b
-  let docs = Yaml::load_from_string(source)
+  let docs = @yaml.Yaml::load_from_string(source)
   @debug.assert_eq(docs.length(), 1)
   json_inspect(docs[0], content={ "seq": ["a", "b"] })
 }
@@ -770,7 +771,7 @@ test "SKE5: Anchor before zero indented sequence" {
 test "UDM2" {
   let source =
     #|- { url: http://example.org }
-  let docs = Yaml::load_from_string(source)
+  let docs = @yaml.Yaml::load_from_string(source)
   @debug.assert_eq(docs.length(), 1)
   json_inspect(docs[0], content=[{ "url": "http://example.org" }])
 }
@@ -785,7 +786,7 @@ test "UT92: Explicit Documents" {
     #|---
     #|# Empty
     #|...
-  let docs = Yaml::load_from_string(source)
+  let docs = @yaml.Yaml::load_from_string(source)
   @debug.assert_eq(docs.length(), 2)
   json_inspect(docs[0], content={ "matches %": 20 })
   json_inspect(docs[1], content=null)
@@ -796,7 +797,7 @@ test "W5VH: Allowed characters in alias" {
   let source =
     #|a: &:@*!$"<foo>: scalar a
     #|b: *:@*!$"<foo>:
-  let docs = Yaml::load_from_string(source)
+  let docs = @yaml.Yaml::load_from_string(source)
   @debug.assert_eq(docs.length(), 1)
   json_inspect(docs[0], content={ "a": "scalar a", "b": "scalar a" })
 }
@@ -808,7 +809,7 @@ test "WZ62: Empty Content" {
     #|  foo : !!str,
     #|  !!str : bar,
     #|}
-  let docs = Yaml::load_from_string(source)
+  let docs = @yaml.Yaml::load_from_string(source)
   @debug.assert_eq(docs.length(), 1)
   // result different from yaml-test-suite, but same as yaml-rust2
   json_inspect(docs[0], content={ "foo": "" })
@@ -821,7 +822,7 @@ test "X8DW: Explicit key and value seperated by comment" {
     #|? key
     #|# comment
     #|: value
-  let docs = Yaml::load_from_string(source)
+  let docs = @yaml.Yaml::load_from_string(source)
   @debug.assert_eq(docs.length(), 1)
   json_inspect(docs[0], content={ "key": "value" })
 }
