@@ -178,7 +178,7 @@ fn YamlLoader::on_event_impl(
       self.key_stack.push("") // place holder
     }
     Event::MappingEnd => {
-      guard self.key_stack.pop() is Some(_)
+      guard! self.key_stack.pop() is Some(_)
       let node = self.doc_stack.pop().unwrap()
       self.insert_new_node(node, mark)
     }
@@ -302,7 +302,7 @@ struct YamlEmitter {
 ///|
 /// Create a new emitter serializing into `writer`.
 pub fn YamlEmitter::new(
-  writer? : StringBuilder = StringBuilder::new(),
+  writer? : StringBuilder = StringBuilder(),
 ) -> YamlEmitter {
   YamlEmitter::{
     writer,
@@ -663,3 +663,12 @@ fn need_quotes(value : String) -> Bool {
     _ => true
   }
 }
+
+///|
+pub extend Yaml with Eq::{not_equal, equal}
+
+///|
+pub extend Yaml with @moonbitlang/core/debug.Debug::{to_repr}
+
+///|
+pub extend Yaml with ToJson::{to_json}

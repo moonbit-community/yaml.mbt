@@ -92,3 +92,9 @@ pub(open) trait EventReceiver {
 pub(open) trait MarkedEventReceiver {
   fn on_event(Self, event : Event, _mark : Marker) -> Unit
 }
+
+///|
+pub extend Event with Eq::{not_equal, equal}
+
+///|
+pub extend Event with @moonbitlang/core/debug.Debug::{to_repr}

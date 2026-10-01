@@ -1,7 +1,7 @@
 ///|
 fn load_result(source : String) -> String {
   try {
-    let docs = Yaml::load_from_string(source)
+    let docs = @yaml.Yaml::load_from_string(source)
     docs.map(d => d.to_json().stringify()).join("|")
   } catch {
     YamlError(info~, ..) => "error: \{info}"

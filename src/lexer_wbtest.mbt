@@ -907,7 +907,7 @@ test "tag directives" {
 
 ///|
 test "looks like float but actually string" {
-  let buf = StringBuilder::new(size_hint=400)
+  let buf = StringBuilder(size_hint=400)
   let bases = ["nan", "NAN", "NaN", "inf", "infinity", "Infinity"]
   for base in bases {
     buf.write_string("- +\{base}\n")

@@ -48,7 +48,7 @@ struct Parser {
 pub fn Parser::new(str : StringView) -> Parser {
   Parser::{
     lexer: Lexer::new(str),
-    states: Array::new(capacity=40),
+    states: Array(capacity=40),
     state: State::StreamStart,
     token: None,
     current: None,
@@ -245,7 +245,7 @@ fn[R : MarkedEventReceiver] Parser::load_document(
 
   // DOCUMENT-END is expected.
   let (ev, mark) = self.next_token()
-  guard ev == Event::DocumentEnd
+  guard! ev == Event::DocumentEnd
   recv.on_event(ev, mark)
 }
 
