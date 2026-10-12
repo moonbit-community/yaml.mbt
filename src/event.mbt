@@ -10,19 +10,19 @@ pub enum Event {
   DocumentEnd
   /// A YAML Alias.
   /// - id : The anchor ID the alias refers to.
-  Alias(id~ : Int)
+  Alias(id~ : Int32)
   /// Value, style, anchor id, tag
-  Scalar(value~ : String, style~ : TScalarStyle, id~ : Int, tag~ : Tag?)
+  Scalar(value~ : String, style~ : TScalarStyle, id~ : Int32, tag~ : Tag?)
   /// The start of a YAML sequence (array).
   /// - id : The anchor ID of the start of the sequence.
   /// - tag : An optional tag
-  SequenceStart(id~ : Int, tag~ : Tag?)
+  SequenceStart(id~ : Int32, tag~ : Tag?)
   /// The end of a YAML sequence (array).
   SequenceEnd
   /// The start of a YAML mapping (object, hash).
   /// - id : The anchor ID of the start of the mapping.
   /// - tag : An optional tag
-  MappingStart(id~ : Int, tag~ : Tag?)
+  MappingStart(id~ : Int32, tag~ : Tag?)
   /// The end of a YAML mapping (object, hash).
   MappingEnd
 } derive(Eq, Debug)
@@ -33,7 +33,7 @@ fn Event::empty_scalar() -> Event {
 }
 
 ///|
-fn Event::empty_scalar_with_anchor(anchor : Int, tag : Tag?) -> Event {
+fn Event::empty_scalar_with_anchor(anchor : Int32, tag : Tag?) -> Event {
   Event::Scalar(value="", style=TScalarStyle::Plain, id=anchor, tag~)
 }
 

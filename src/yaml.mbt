@@ -112,9 +112,9 @@ priv struct YamlLoader {
   /// The different YAML documents that are loaded.
   docs : Array[Yaml]
   /// stack of (current node, anchor_id)
-  doc_stack : Array[(Yaml, Int)]
+  doc_stack : Array[(Yaml, Int32)]
   key_stack : Array[String]
-  anchor_map : @sorted_map.SortedMap[Int, Yaml]
+  anchor_map : @sorted_map.SortedMap[Int32, Yaml]
   mut error : YamlError?
 }
 
@@ -232,7 +232,7 @@ fn YamlLoader::on_event_impl(
 ///|
 fn YamlLoader::insert_new_node(
   self : YamlLoader,
-  node : (Yaml, Int),
+  node : (Yaml, Int32),
   mark : Marker,
 ) -> Unit raise YamlError {
   // valid anchor id starts from 1
@@ -293,16 +293,16 @@ fn YamlLoader::insert_new_node(
 /// ```
 struct YamlEmitter {
   writer : StringBuilder
-  best_indent : Int
+  best_indent : Int32
   mut compact : Bool
-  mut level : Int
+  mut level : Int32
   mut multiline_strings : Bool
 }
 
 ///|
 /// Create a new emitter serializing into `writer`.
 pub fn YamlEmitter::new(
-  writer? : StringBuilder = StringBuilder(),
+  writer~ : StringBuilder = StringBuilder(),
 ) -> YamlEmitter {
   YamlEmitter::{
     writer,
@@ -542,7 +542,7 @@ fn escape_str(writer : StringBuilder, value : String) -> Unit {
 }
 
 ///|
-fn write_hex_escape(writer : StringBuilder, value : Int) -> Unit {
+fn write_hex_escape(writer : StringBuilder, value : Int32) -> Unit {
   writer.write_string("\\u")
   writer.write_char(hex_digit((value >> 12) & 0xf))
   writer.write_char(hex_digit((value >> 8) & 0xf))
@@ -551,7 +551,7 @@ fn write_hex_escape(writer : StringBuilder, value : Int) -> Unit {
 }
 
 ///|
-fn hex_digit(value : Int) -> Char {
+fn hex_digit(value : Int32) -> Char {
   match value {
     0 => '0'
     1 => '1'
@@ -580,9 +580,9 @@ fn is_valid_literal_block_scalar(value : String) -> Bool {
   .all(ch => {
     ch == '\t' ||
     ch == '\n' ||
-    ch is ('\u{0020}'..='\u{007e}') ||
+    ch is ('\u{0020}'..<='\u{007e}') ||
     ch == '\u{0085}' ||
-    ch is ('\u{00a0}'..='\u{d7ff}')
+    ch is ('\u{00a0}'..<='\u{d7ff}')
   })
 }
 

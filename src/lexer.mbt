@@ -5,7 +5,7 @@ priv enum TokenType {
   /// The end of the stream, EOF.
   StreamEnd
   /// A YAML version directive `(Major, Minor)`.
-  VersionDirective(major~ : Int, minor~ : Int)
+  VersionDirective(major~ : Int32, minor~ : Int32)
   /// A YAML tag directive `(Handle, Prefix)` (e.g.: `!!str`, `!foo!bar`, ...).
   TagDirective(handle~ : String, prefix~ : String)
   /// The start of a YAML document (`---`).
@@ -117,7 +117,7 @@ priv struct SimpleKey {
   /// This is the index in the scanner, which takes into account both the tokens that have been
   /// emitted and those about to be emitted. See `Lexer::tokens_parsed` and
   /// `Lexer::tokens` for more details.
-  mut token_number : Int
+  mut token_number : Int32
   /// The position at which the token the `SimpleKey` refers to is.
   mark : Marker
 }
@@ -141,7 +141,7 @@ fn SimpleKey::clone(self : SimpleKey) -> SimpleKey {
 /// An indentation level on the stack of indentations.
 priv struct Indent {
   /// The former indentation level.
-  indent : Int
+  indent : Int32
   /// Whether, upon closing, this indents generates a `BlockEnd` token.
   ///
   /// There are levels of indentation which do not start a block. Examples of this would be:
@@ -171,11 +171,11 @@ priv struct Indent {
 priv struct Lexer {
   mut input : StringView
   /// The index (in chars) in the input string.
-  mut index : Int
+  mut index : Int32
   /// The line (1-indexed).
-  mut line : Int
+  mut line : Int32
   /// The column (1-indexed).
-  mut col : Int
+  mut col : Int32
   /// Buffer for tokens to be returned (can hold some temporary tokens that are not yet ready to be returned)
   tokens : @deque.Deque[Token]
   /// Buffer for the next characters to consume.
@@ -188,7 +188,7 @@ priv struct Lexer {
   mut stream_end_produced : Bool
   /// In some flow contexts, the value of a mapping is allowed to be adjacent to the `:`. When it
   /// is, the index at which the `:` may be must be stored in `adjacent_value_allowed_at`.
-  mut adjacent_value_allowed_at : Int
+  mut adjacent_value_allowed_at : Int32
   /// Whether a simple key could potentially start at the current position.
   ///
   /// Simple keys are the opposite of complex keys which are keys starting with `?`.
@@ -199,15 +199,15 @@ priv struct Lexer {
   /// are.
   simple_keys : Array[SimpleKey]
   /// The current indentation level.
-  mut indent : Int
+  mut indent : Int32
   /// List of all block indentation levels we are in (except the current one).
   indents : Array[Indent]
   /// Level of nesting of flow sequences.
-  mut flow_level : Int
+  mut flow_level : Int32
   /// The number of tokens that have been returned from the scanner.
   ///
   /// This excludes the tokens from `Self::tokens`.
-  mut tokens_parsed : Int
+  mut tokens_parsed : Int32
   /// Whether a token is ready to be taken from `Self::tokens`.
   mut token_available : Bool
   /// Whether all characters encountered since the last newline were whitespace.
@@ -278,7 +278,7 @@ fn Lexer::get_marker(self : Lexer) -> Marker {
 /// Fill `self.buffer` with at least `count` characters.
 ///
 /// The characters that are extracted this way are not consumed but only placed in the buffer.
-fn Lexer::lookahead(self : Lexer, count : Int) -> Unit {
+fn Lexer::lookahead(self : Lexer, count : Int32) -> Unit {
   if self.buffer.length() >= count {
     return
   }
@@ -313,7 +313,7 @@ fn Lexer::skip_non_blank(self : Lexer) -> Unit {
 
 ///|
 /// Consume the next n characters. It is assumed none of the next characters are blanks.
-fn Lexer::skip_n_non_blank(self : Lexer, n : Int) -> Unit {
+fn Lexer::skip_n_non_blank(self : Lexer, n : Int32) -> Unit {
   // ignore(self.buffer.drain(start=0, len=n))
   for _ in 0..<n {
     ignore(self.buffer.pop_front())
@@ -440,7 +440,7 @@ fn Lexer::next_is_document_indicator(self : Lexer) -> Bool {
 
 ///|
 /// Insert a token at the given position.
-fn Lexer::insert_token(self : Lexer, pos : Int, token : Token) -> Unit {
+fn Lexer::insert_token(self : Lexer, pos : Int32, token : Token) -> Unit {
   guard! pos <= self.tokens.length()
   self.tokens.insert(pos, token)
 }
@@ -1025,7 +1025,7 @@ fn Lexer::resolve_flow_scalar_escape_sequence(
   // Consume an arbitrary escape code.
   if code_length > 0 {
     self.lookahead(code_length)
-    let mut value : Int = 0
+    let mut value : Int32 = 0
     for i in 0..<code_length {
       if !self.buffer[i].is_hex() {
         raise YamlError::YamlError(
@@ -1292,7 +1292,7 @@ fn Lexer::scan_block_scalar_content_line(
 /// Skip the block scalar indentation and empty lines.
 fn Lexer::skip_block_scalar_indent(
   self : Lexer,
-  indent : Int,
+  indent : Int32,
   breaks : StringBuilder,
 ) -> Unit {
   while true {
@@ -1335,7 +1335,7 @@ fn Lexer::skip_block_scalar_indent(
 /// whitespace line that was encountered.
 fn Lexer::skip_block_scalar_first_line_indent(
   self : Lexer,
-  indent : Ref[Int],
+  indent : Ref[Int32],
   breaks : StringBuilder,
 ) -> Unit {
   let mut max_indent = 0
@@ -1760,8 +1760,8 @@ fn Lexer::fetch_block_entry(self : Lexer) -> Unit raise YamlError {
 ///   - The current column is further indented than the last indent we have registered.
 fn Lexer::roll_indent(
   self : Lexer,
-  col : Int,
-  number : Int?,
+  col : Int32,
+  number : Int32?,
   tok : TokenType,
   mark : Marker,
 ) -> Unit {
@@ -2090,7 +2090,7 @@ fn Lexer::scan_uri_escapes(self : Lexer, mark : Marker) -> Char raise YamlError 
       break
     }
   }
-  match Int::to_char(code) {
+  match Int32::to_char(code) {
     Some(ch) => ch
     None =>
       raise YamlError::YamlError(
@@ -2163,7 +2163,7 @@ fn Lexer::scan_version_directive_value(
 fn Lexer::scan_version_directive_number(
   self : Lexer,
   mark : Marker,
-) -> Int raise YamlError {
+) -> Int32 raise YamlError {
   let mut val = 0
   let mut length = 0
   while self.look_char().to_digit() is Some(digit) {
@@ -2254,7 +2254,7 @@ fn Lexer::remove_simple_key(self : Lexer) -> Unit raise YamlError {
 /// Indentation levels are popped from the stack while they are further indented than `col`.
 /// If we are in a flow-style construct (which don't have indentation per-se), this function
 /// does nothing.
-fn Lexer::unroll_indent(self : Lexer, col : Int) -> Unit {
+fn Lexer::unroll_indent(self : Lexer, col : Int32) -> Unit {
   if self.flow_level > 0 {
     return
   }

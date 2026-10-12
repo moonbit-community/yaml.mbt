@@ -63,7 +63,7 @@ test "external event receiver" {
 ///|
 /// A receiver outside the package that only wants events, not markers.
 struct Counter {
-  mut scalars : Int
+  mut scalars : Int32
 }
 
 ///|

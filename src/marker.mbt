@@ -1,11 +1,11 @@
 ///|
 pub struct Marker {
   /// The index (in chars) in the input string.
-  index : Int
+  index : Int32
   /// The line (1-indexed).
-  line : Int
+  line : Int32
   /// The column (1-indexed).
-  col : Int
+  col : Int32
 } derive(Debug, Eq)
 
 ///|
