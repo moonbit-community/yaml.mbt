@@ -25,16 +25,16 @@ fn Char::is_blank_or_breakz(self : Char) -> Bool {
 
 ///|
 fn Char::is_alpha(self : Char) -> Bool {
-  self is ('0'..='9') ||
-  self is ('a'..='z') ||
-  self is ('A'..='Z') ||
+  self is ('0'..<='9') ||
+  self is ('a'..<='z') ||
+  self is ('A'..<='Z') ||
   self is '_' ||
   self is '-'
 }
 
 ///|
-fn Char::to_digit(self : Char) -> Int? {
-  if self is ('0'..='9') {
+fn Char::to_digit(self : Char) -> Int32? {
+  if self is ('0'..<='9') {
     Some(self.to_int() - 48)
   } else {
     None
@@ -72,15 +72,15 @@ fn Char::is_word_char(self : Char) -> Bool {
 ///|
 /// Check whether the character is a hexadecimal character (case insensitive).
 fn Char::is_hex(self : Char) -> Bool {
-  self.is_ascii_digit() || self is ('a'..='f') || self is ('A'..='F')
+  self.is_ascii_digit() || self is ('a'..<='f') || self is ('A'..<='F')
 }
 
 ///|
-fn Char::as_hex(self : Char) -> Int {
+fn Char::as_hex(self : Char) -> Int32 {
   match self {
-    '0'..='9' => (self.to_uint() - '0'.to_uint()).reinterpret_as_int()
-    'a'..='f' => (self.to_uint() - 'a'.to_uint()).reinterpret_as_int() + 10
-    'A'..='F' => (self.to_uint() - 'A'.to_uint()).reinterpret_as_int() + 10
+    '0'..<='9' => (self.to_uint() - '0'.to_uint()).reinterpret_as_int()
+    'a'..<='f' => (self.to_uint() - 'a'.to_uint()).reinterpret_as_int() + 10
+    'A'..<='F' => (self.to_uint() - 'A'.to_uint()).reinterpret_as_int() + 10
     _ => panic()
   }
 }
