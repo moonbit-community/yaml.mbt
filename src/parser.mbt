@@ -45,9 +45,64 @@ struct Parser {
 }
 
 ///|
-pub fn Parser::new(str : StringView) -> Parser {
+/// Create a parser for `str`.
+///
+/// `lenient_quoted_scalar_indentation`, an opt-in js-yaml compatibility
+/// setting, accepts multi-line single- and double-quoted scalars whose
+/// continuation lines are not indented enough, as js-yaml does.
+///
+/// In block context, the continuation lines of a quoted (flow) scalar must be
+/// indented: `nb-double-multi-line(n)` and `nb-single-multi-line(n)` fold
+/// their lines with `s-flow-line-prefix(n)`, which starts with `s-indent(n)`,
+/// and the value of a block mapping is a node at indentation `n+1`. This is
+/// therefore an error, as in [test
+/// QB6E](https://github.com/yaml/yaml-test-suite/blob/ccfa74e56afb53da960847ff6e6976c0a0825709/src/QB6E.yaml)
+/// of the yaml-test-suite:
+///
+/// ```yaml
+/// config:
+///   themeCSS: "a
+///   b"
+/// ```
+///
+/// js-yaml (used by mermaid and many other tools) does not check the
+/// indentation of these lines and accepts such documents. With
+/// `lenient_quoted_scalar_indentation=true`, so does this parser: `themeCSS` above is `"a b"`. Exactly
+/// one thing is relaxed: the indentation of the continuation lines of single-
+/// and double-quoted scalars, including the line holding the closing quote,
+/// may be anything, down to column 0. The leading white space of such a line
+/// (spaces, and also tabs, since there is no indentation left for them to
+/// break) is still not content, and line folding, escapes and the stripping
+/// of white space around line breaks are unchanged. The scalar may be the
+/// value of a block collection entry or sit inside a flow collection nested
+/// in one (js-yaml accepts both); the indentation of the tokens following the
+/// closing quote on its last line is not checked either, as it is the
+/// indentation of that line. Everything else keeps the YAML 1.2 rules:
+/// - a document marker (`---` or `...` followed by a blank) at the start of a
+///   line inside a quoted scalar is still an error, as is the end of input
+///   before the closing quote (js-yaml rejects both too);
+/// - plain and block (`|`, `>`) scalars must be indented as before (js-yaml
+///   rejects under-indented plain scalars too);
+/// - a flow collection line that starts with a new entry or with a closing
+///   bracket must be indented as before.
+///
+/// Folding follows YAML in both modes, also where js-yaml differs: js-yaml
+/// keeps the white space before a line break of a quoted scalar (`"a  \n  b"`
+/// is `"a   b"` there, `"a b"` here), and drops the empty lines following an
+/// escaped line break (a `\` at the end of a line followed by an empty line
+/// is `""` there, a line feed here, as `l-empty` in `s-double-escaped(n)`).
+///
+/// The default is `false`: strict YAML 1.2. The setting is fixed for the
+/// life of the parser, since it changes how the input is scanned.
+#alias(new, deprecated)
+pub fn Parser::Parser(
+  str : StringView,
+  lenient_quoted_scalar_indentation~ : Bool = false,
+) -> Parser {
+  let lexer = Lexer::new(str)
+  lexer.lenient_quoted_scalar_indentation = lenient_quoted_scalar_indentation
   Parser::{
-    lexer: Lexer::new(str),
+    lexer,
     states: Array(capacity=40),
     state: State::StreamStart,
     token: None,
@@ -129,7 +184,7 @@ test "peek eq parse" {
     #|    - [a1, a2]
     #|    - 2
     #|a5: *x
-  let p = Parser::new(source)
+  let p = Parser(source)
   while true {
     let event_peek = p.peek()
     let event = p.next_token()

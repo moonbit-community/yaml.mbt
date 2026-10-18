@@ -136,10 +136,16 @@ pub fn Yaml::load_from_parser(parser : Parser) -> Array[Yaml] raise YamlError {
 }
 
 ///|
+/// Load all the documents of `source`.
+///
+/// `lenient_quoted_scalar_indentation` accepts quoted scalars whose
+/// continuation lines are not indented enough, as js-yaml does; see
+/// `Parser::Parser`. The default is strict YAML 1.2.
 pub fn Yaml::load_from_string(
   source : StringView,
+  lenient_quoted_scalar_indentation~ : Bool = false,
 ) -> Array[Yaml] raise YamlError {
-  let parser = Parser::new(source)
+  let parser = Parser(source, lenient_quoted_scalar_indentation~)
   Yaml::load_from_parser(parser)
 }
 

@@ -39,7 +39,7 @@ test "external event receiver" {
     #|a: &x 1
     #|b: 'q'
     #|c: *x
-  @yaml.Parser::new(source).load(recorder, false)
+  @yaml.Parser(source).load(recorder, false)
   debug_inspect(
     recorder.events,
     content=(
@@ -88,7 +88,7 @@ impl MarkedEventReceiver for Unmarked with fn on_event(self, event, _mark) {
 ///|
 test "external unmarked event receiver" {
   let counter = { scalars: 0, }
-  let parser = @yaml.Parser::new("a: 1\nb: [2, 3]\n")
+  let parser = @yaml.Parser("a: 1\nb: [2, 3]\n")
   parser.load({ inner: counter, }, false)
   inspect(counter.scalars, content="5")
 }
