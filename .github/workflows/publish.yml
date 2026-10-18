@@ -27,9 +27,6 @@ jobs:
         run: |
           curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash
           echo "$HOME/.moon/bin" >> $GITHUB_PATH
-          # the installer gives the stable release; always build with the
-          # latest toolchain
-          "$HOME/.moon/bin/moon" upgrade --dev
 
       - name: moon version
         run: |
