@@ -19,11 +19,11 @@ pub enum Event {
   StreamEnd
   DocumentStart
   DocumentEnd
-  Alias(id~ : Int32)
-  Scalar(value~ : String, style~ : TScalarStyle, id~ : Int32, tag~ : Tag?)
-  SequenceStart(id~ : Int32, tag~ : Tag?)
+  Alias(id~ : Int)
+  Scalar(value~ : String, style~ : TScalarStyle, id~ : Int, tag~ : Tag?)
+  SequenceStart(id~ : Int, tag~ : Tag?)
   SequenceEnd
-  MappingStart(id~ : Int32, tag~ : Tag?)
+  MappingStart(id~ : Int, tag~ : Tag?)
   MappingEnd
 } derive(Eq, @debug.Debug)
 pub fn Event::equal(Self, Self) -> Bool
@@ -31,9 +31,9 @@ pub fn Event::not_equal(Self, Self) -> Bool
 pub fn Event::to_repr(Self) -> @debug.Repr
 
 pub struct Marker {
-  index : Int32
-  line : Int32
-  col : Int32
+  index : Int
+  line : Int
+  col : Int
 } derive(Eq, @debug.Debug)
 pub fn Marker::equal(Self, Self) -> Bool
 pub fn Marker::not_equal(Self, Self) -> Bool
