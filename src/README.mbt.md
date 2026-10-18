@@ -79,9 +79,8 @@ test {
     @yaml.Yaml::load_from_string(source, lenient_quoted_scalar_indentation=true),
     content=[{ "config": { "themeCSS": "a b" } }],
   )
-  // or on a `Parser`
-  let parser = @yaml.Parser::new(source)
-  parser.lenient_quoted_scalar_indentation(true)
+  // or on a `Parser`, for event-level use
+  let parser = @yaml.Parser::new(source, lenient_quoted_scalar_indentation=true)
   json_inspect(@yaml.Yaml::load_from_parser(parser), content=[
     { "config": { "themeCSS": "a b" } },
   ])

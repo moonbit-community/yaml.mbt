@@ -431,9 +431,11 @@ test "lenient: what stays an error" {
 }
 
 ///|
-test "lenient: Parser::lenient_quoted_scalar_indentation" {
-  let parser = @yaml.Parser::new("config:\n  themeCSS: \"a\nb\"")
-  parser.lenient_quoted_scalar_indentation(true)
+test "lenient: Parser::new(lenient_quoted_scalar_indentation=true)" {
+  let parser = @yaml.Parser::new(
+    "config:\n  themeCSS: \"a\nb\"",
+    lenient_quoted_scalar_indentation=true,
+  )
   json_inspect(@yaml.Yaml::load_from_parser(parser), content=[
     { "config": { "themeCSS": "a b" } },
   ])

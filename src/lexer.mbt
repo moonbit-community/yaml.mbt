@@ -222,7 +222,7 @@ priv struct Lexer {
   /// Whether we currently are in an implicit flow mapping.
   mut implicit_flow_mapping : Bool
   /// Accept continuation lines of quoted scalars that are not indented enough
-  /// (js-yaml compatibility, see `Parser::lenient_quoted_scalar_indentation`).
+  /// (js-yaml compatibility, see `Parser::new`).
   mut lenient_quoted_scalar_indentation : Bool
   /// The line on which the last quoted scalar ended, if that line was less
   /// indented than the enclosing block (only possible with

@@ -41,9 +41,8 @@ pub fn Marker::to_repr(Self) -> @debug.Repr
 
 type Parser
 pub fn Parser::keep_tags(Self, Bool) -> Unit
-pub fn Parser::lenient_quoted_scalar_indentation(Self, Bool) -> Unit
 pub fn[R : MarkedEventReceiver] Parser::load(Self, R, Bool) -> Unit raise YamlError
-pub fn Parser::new(StringView) -> Self
+pub fn Parser::new(StringView, lenient_quoted_scalar_indentation? : Bool) -> Self
 
 pub enum TScalarStyle {
   Plain
