@@ -856,6 +856,10 @@ fn Lexer::scan_flow_scalar(
         info="while scanning a quoted scalar, found unexpected end of stream",
       )
     }
+    // Every line of the scalar is checked here before any of its content or
+    // the closing quote is consumed: `consume_flow_scalar_non_whitespace_chars`
+    // stops at an escaped line break, and only blanks and line breaks are
+    // consumed below.
     if self.col < self.indent {
       // A continuation line (or the line holding the closing quote) is not
       // indented as the enclosing block requires (`s-flow-line-prefix(n)`).
@@ -867,15 +871,18 @@ fn Lexer::scan_flow_scalar(
       }
       deficient_line = self.line
     }
+    // The closing quote is only recognised here, after the checks above, so
+    // that its line is checked like every other line of the scalar, however
+    // it was reached (a folded line break, an escaped line break, ...).
+    match self.char() {
+      '\'' if single && self.buffer[1] != '\'' => break
+      '"' if !single => break
+      _ => ()
+    }
     leading_blanks.val = false
     self.consume_flow_scalar_non_whitespace_chars(
       single, buf, leading_blanks, start_mark,
     )
-    match self.look_char() {
-      '\'' if single => break
-      '"' if !single => break
-      _ => ()
-    }
 
     // Consume blank characters.
     while self.char().is_blank() || self.char().is_break() {

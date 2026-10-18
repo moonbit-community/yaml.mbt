@@ -126,9 +126,11 @@ pub fn Parser::keep_tags(self : Parser, value : Bool) -> Unit {
 /// - a flow collection line that starts with a new entry or with a closing
 ///   bracket must be indented as before.
 ///
-/// js-yaml keeps the white space before a line break of a quoted scalar
-/// (`"a  \n  b"` is `"a   b"` there); this parser strips it, as YAML
-/// requires, in both modes.
+/// Folding follows YAML in both modes, also where js-yaml differs: js-yaml
+/// keeps the white space before a line break of a quoted scalar (`"a  \n  b"`
+/// is `"a   b"` there, `"a b"` here), and drops the empty lines following an
+/// escaped line break (a `\` at the end of a line followed by an empty line
+/// is `""` there, a line feed here, as `l-empty` in `s-double-escaped(n)`).
 ///
 /// The default is `false`: strict YAML 1.2.
 pub fn Parser::lenient_quoted_scalar_indentation(

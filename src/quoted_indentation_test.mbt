@@ -195,6 +195,93 @@ test "lenient: escapes, escaped line breaks and empty lines" {
 }
 
 ///|
+test "the line of the closing quote is checked however it is reached" {
+  // An escaped line break followed directly by the closing quote, or by more
+  // escaped line breaks, consumes the line break itself: the closing quote's
+  // line is still checked against the indentation (strict) and recorded as
+  // under-indented (lenient), so the `]` or `,` after it is accepted.
+  inspect(
+    load_result("k:\n  a: \"x\\\n\""),
+    content="error: invalid indentation in quoted scalar",
+  )
+  inspect(
+    load_result("k:\n    a: [ \"x\\\n\" ]"),
+    content="error: invalid indentation in quoted scalar",
+  )
+  inspect(
+    load_result("k:\n  a: \"x\\\n   \""),
+    content=(
+      #|{"k":{"a":"x"}}
+    ),
+  )
+  inspect(
+    load_lenient("k:\n  a: \"x\\\n\""),
+    content=(
+      #|{"k":{"a":"x"}}
+    ),
+  )
+  inspect(
+    load_lenient("k:\n    a: [ \"x\\\n\" ]"),
+    content=(
+      #|{"k":{"a":["x"]}}
+    ),
+  )
+  inspect(
+    load_lenient("k:\n    a: [ \"x\\\n\", y ]"),
+    content=(
+      #|{"k":{"a":["x","y"]}}
+    ),
+  )
+  // several escaped line breaks, then the quote or content at column 0
+  inspect(
+    load_lenient("k:\n    a: [ \"x\\\n\\\n\" ]"),
+    content=(
+      #|{"k":{"a":["x"]}}
+    ),
+  )
+  inspect(
+    load_lenient("k:\n  a: \"x\\\n\\\ny\""),
+    content=(
+      #|{"k":{"a":"xy"}}
+    ),
+  )
+  // an escape right after an escaped line break
+  inspect(
+    load_lenient("k:\n    a: [ \"x\\\n\\t\" ]"),
+    content=(
+      #|{"k":{"a":["x\t"]}}
+    ),
+  )
+  // single quotes: the closing quote, and a `''` escape, at column 0
+  inspect(
+    load_lenient("k:\n    a: [ 'x\n' ]"),
+    content=(
+      #|{"k":{"a":["x "]}}
+    ),
+  )
+  inspect(
+    load_lenient("k:\n    a: [ 'x\n''' ]"),
+    content=(
+      #|{"k":{"a":["x '"]}}
+    ),
+  )
+  inspect(
+    load_lenient("k:\n    a: [ 'x\n''y' ]"),
+    content=(
+      #|{"k":{"a":["x 'y"]}}
+    ),
+  )
+  // an empty line after an escaped line break is a line feed
+  // (`l-empty(n,flow-in)*` in `s-double-escaped(n)`); js-yaml drops it
+  inspect(
+    load_lenient("k:\n    a: [ \"x\\\n\n\" ]"),
+    content=(
+      #|{"k":{"a":["x\n"]}}
+    ),
+  )
+}
+
+///|
 test "lenient: the enclosing block structure is kept" {
   // a following sibling key
   inspect(
