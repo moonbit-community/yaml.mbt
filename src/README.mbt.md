@@ -80,7 +80,7 @@ test {
     content=[{ "config": { "themeCSS": "a b" } }],
   )
   // or on a `Parser`, for event-level use
-  let parser = @yaml.Parser::new(source, lenient_quoted_scalar_indentation=true)
+  let parser = @yaml.Parser(source, lenient_quoted_scalar_indentation=true)
   json_inspect(@yaml.Yaml::load_from_parser(parser), content=[
     { "config": { "themeCSS": "a b" } },
   ])

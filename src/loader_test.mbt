@@ -7,7 +7,7 @@ test "keep tags across multiple documents" {
     #|foo: "bar"
     #|--- !t!2 &2
     #|baz: "qux"
-  let parser = @yaml.Parser::new(source)
+  let parser = @yaml.Parser(source)
   parser.keep_tags(true)
   let docs = @yaml.Yaml::load_from_parser(parser)
   json_inspect(docs, content=[{ "foo": "bar" }, { "baz": "qux" }])

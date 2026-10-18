@@ -40,9 +40,10 @@ pub fn Marker::not_equal(Self, Self) -> Bool
 pub fn Marker::to_repr(Self) -> @debug.Repr
 
 type Parser
+#alias(new, deprecated)
+pub fn Parser::Parser(StringView, lenient_quoted_scalar_indentation? : Bool) -> Self
 pub fn Parser::keep_tags(Self, Bool) -> Unit
 pub fn[R : MarkedEventReceiver] Parser::load(Self, R, Bool) -> Unit raise YamlError
-pub fn Parser::new(StringView, lenient_quoted_scalar_indentation? : Bool) -> Self
 
 pub enum TScalarStyle {
   Plain

@@ -94,7 +94,8 @@ struct Parser {
 ///
 /// The default is `false`: strict YAML 1.2. The setting is fixed for the
 /// life of the parser, since it changes how the input is scanned.
-pub fn Parser::new(
+#alias(new, deprecated)
+pub fn Parser::Parser(
   str : StringView,
   lenient_quoted_scalar_indentation~ : Bool = false,
 ) -> Parser {
@@ -183,7 +184,7 @@ test "peek eq parse" {
     #|    - [a1, a2]
     #|    - 2
     #|a5: *x
-  let p = Parser::new(source)
+  let p = Parser(source)
   while true {
     let event_peek = p.peek()
     let event = p.next_token()

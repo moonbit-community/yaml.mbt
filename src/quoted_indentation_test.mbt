@@ -431,8 +431,8 @@ test "lenient: what stays an error" {
 }
 
 ///|
-test "lenient: Parser::new(lenient_quoted_scalar_indentation=true)" {
-  let parser = @yaml.Parser::new(
+test "lenient: Parser(lenient_quoted_scalar_indentation=true)" {
+  let parser = @yaml.Parser(
     "config:\n  themeCSS: \"a\nb\"",
     lenient_quoted_scalar_indentation=true,
   )
