@@ -221,6 +221,17 @@ priv struct Lexer {
   mut flow_mapping_started : Bool
   /// Whether we currently are in an implicit flow mapping.
   mut implicit_flow_mapping : Bool
+  /// Accept continuation lines of quoted scalars that are not indented enough
+  /// (js-yaml compatibility, see `Parser::lenient_quoted_scalar_indentation`).
+  mut lenient_quoted_scalar_indentation : Bool
+  /// The line on which the last quoted scalar ended, if that line was less
+  /// indented than the enclosing block (only possible with
+  /// `lenient_quoted_scalar_indentation`), otherwise -1.
+  ///
+  /// The indentation of that line belongs to the quoted scalar, so the tokens
+  /// following the closing quote on it (`,`, `]`, `}`, ... in a flow
+  /// collection) are not checked against the indentation either.
+  mut deficient_quoted_line : Int32
 }
 
 ///|
@@ -259,6 +270,8 @@ fn Lexer::new(input : StringView) -> Lexer {
     leading_whitespace: true,
     flow_mapping_started: false,
     implicit_flow_mapping: false,
+    lenient_quoted_scalar_indentation: false,
+    deficient_quoted_line: -1,
   }
 }
 
@@ -515,7 +528,7 @@ fn Lexer::fetch_next_token(self : Lexer) -> Unit raise YamlError {
     }
     return
   }
-  if self.col < self.indent {
+  if self.is_below_indent(self.indent) {
     raise YamlError::YamlError(
       mark=self.get_marker(),
       info="invalid indentation",
@@ -558,6 +571,17 @@ fn Lexer::fetch_next_token(self : Lexer) -> Unit raise YamlError {
       )
     _ => self.fetch_plain_scalar()
   }
+}
+
+///|
+/// Whether a token starting at the current position is indented less than
+/// `indent`.
+///
+/// The rest of a line on which a quoted scalar ended with a deficient
+/// indentation (see `Lexer::deficient_quoted_line`) is exempt: the
+/// indentation of that line was already accepted as part of the scalar.
+fn Lexer::is_below_indent(self : Lexer, indent : Int32) -> Bool {
+  self.col < indent && self.line != self.deficient_quoted_line
 }
 
 ///|
@@ -644,7 +668,7 @@ fn Lexer::scan_plain_scalar(self : Lexer) -> Token raise YamlError {
   self.unroll_non_block_indents()
   let indent = self.indent + 1
   let start_mark = self.get_marker()
-  if self.flow_level > 0 && self.col < indent {
+  if self.flow_level > 0 && self.is_below_indent(indent) {
     raise YamlError::YamlError(
       mark=start_mark,
       info="invalid indentation in flow construct",
@@ -798,6 +822,8 @@ fn Lexer::scan_flow_scalar(
   let trailing_breaks = StringBuilder()
   let whitespaces = StringBuilder()
   let leading_blanks = Ref(false)
+  // The last line of the scalar that was less indented than the block.
+  let mut deficient_line = -1
 
   // Eat the left quote.
   self.skip_non_blank()
@@ -831,10 +857,15 @@ fn Lexer::scan_flow_scalar(
       )
     }
     if self.col < self.indent {
-      raise YamlError::YamlError(
-        mark=start_mark,
-        info="invalid indentation in quoted scalar",
-      )
+      // A continuation line (or the line holding the closing quote) is not
+      // indented as the enclosing block requires (`s-flow-line-prefix(n)`).
+      if !self.lenient_quoted_scalar_indentation {
+        raise YamlError::YamlError(
+          mark=start_mark,
+          info="invalid indentation in quoted scalar",
+        )
+      }
+      deficient_line = self.line
     }
     leading_blanks.val = false
     self.consume_flow_scalar_non_whitespace_chars(
@@ -851,7 +882,11 @@ fn Lexer::scan_flow_scalar(
       if self.char().is_blank() {
         // Consume a space or a tab character.
         if leading_blanks.val {
-          if self.char() == '\t' && self.col < self.indent {
+          // Without an indentation requirement, all leading white space of
+          // a continuation line is separation, and tabs are fine there.
+          if self.char() == '\t' &&
+            self.col < self.indent &&
+            !self.lenient_quoted_scalar_indentation {
             raise YamlError::YamlError(
               mark=self.get_marker(),
               info="tab cannot be used as indentation",
@@ -900,6 +935,9 @@ fn Lexer::scan_flow_scalar(
 
   // Eat the right quote.
   self.skip_non_blank()
+  if deficient_line == self.line {
+    self.deficient_quoted_line = self.line
+  }
   // Ensure there is no invalid trailing content.
   ignore(self.skip_ws_to_eol(SkipTabs::Yes))
   match self.char() {
