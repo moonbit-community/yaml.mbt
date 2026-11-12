@@ -3,38 +3,42 @@ package "moonbit-community/yaml"
 
 import {
   "moonbitlang/core/debug",
+  "moonbitlang/core/json",
 }
 
 // Values
 
 // Errors
+#derive(@debug.Debug)
 pub suberror YamlError {
   YamlError(mark~ : Marker, info~ : String)
-} derive(@debug.Debug)
+}
 pub fn YamlError::to_repr(Self) -> @debug.Repr
 
 // Types and methods
+#derive(Eq, @debug.Debug)
 pub enum Event {
   StreamStart
   StreamEnd
   DocumentStart
   DocumentEnd
-  Alias(id~ : Int)
-  Scalar(value~ : String, style~ : TScalarStyle, id~ : Int, tag~ : Tag?)
-  SequenceStart(id~ : Int, tag~ : Tag?)
+  Alias(id~ : Int32)
+  Scalar(value~ : String, style~ : TScalarStyle, id~ : Int32, tag~ : Tag?)
+  SequenceStart(id~ : Int32, tag~ : Tag?)
   SequenceEnd
-  MappingStart(id~ : Int, tag~ : Tag?)
+  MappingStart(id~ : Int32, tag~ : Tag?)
   MappingEnd
-} derive(Eq, @debug.Debug)
+}
 pub fn Event::equal(Self, Self) -> Bool
 pub fn Event::not_equal(Self, Self) -> Bool
 pub fn Event::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub struct Marker {
-  index : Int
-  line : Int
-  col : Int
-} derive(Eq, @debug.Debug)
+  index : Int32
+  line : Int32
+  col : Int32
+}
 pub fn Marker::equal(Self, Self) -> Bool
 pub fn Marker::not_equal(Self, Self) -> Bool
 pub fn Marker::to_repr(Self) -> @debug.Repr
@@ -45,25 +49,28 @@ pub fn Parser::Parser(StringView, lenient_quoted_scalar_indentation? : Bool) -> 
 pub fn Parser::keep_tags(Self, Bool) -> Unit
 pub fn[R : MarkedEventReceiver] Parser::load(Self, R, Bool) -> Unit raise YamlError
 
+#derive(Eq, @debug.Debug)
 pub enum TScalarStyle {
   Plain
   SingleQuoted
   DoubleQuoted
   Literal
   Folded
-} derive(Eq, @debug.Debug)
+}
 pub fn TScalarStyle::equal(Self, Self) -> Bool
 pub fn TScalarStyle::not_equal(Self, Self) -> Bool
 pub fn TScalarStyle::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub struct Tag {
   handle : String
   suffix : String
-} derive(Eq, @debug.Debug)
+}
 pub fn Tag::equal(Self, Self) -> Bool
 pub fn Tag::not_equal(Self, Self) -> Bool
 pub fn Tag::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum Yaml {
   Real(Double, repr~ : String)
   Integer(Int64)
@@ -73,15 +80,15 @@ pub(all) enum Yaml {
   Map(Map[String, Yaml])
   Null
   BadValue
-} derive(Eq, @debug.Debug)
+}
 pub fn Yaml::dump(Self) -> String
 pub fn Yaml::equal(Self, Self) -> Bool
 pub fn Yaml::load_from_parser(Parser) -> Array[Self] raise YamlError
 pub fn Yaml::load_from_string(StringView, lenient_quoted_scalar_indentation? : Bool) -> Array[Self] raise YamlError
 pub fn Yaml::not_equal(Self, Self) -> Bool
-pub fn Yaml::to_json(Self) -> Json
+pub fn Yaml::to_json(Self) -> @json.Json
 pub fn Yaml::to_repr(Self) -> @debug.Repr
-pub impl ToJson for Yaml
+pub impl @json.ToJson for Yaml
 
 type YamlEmitter
 pub fn YamlEmitter::compact(Self, Bool) -> Unit
