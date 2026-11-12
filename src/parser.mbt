@@ -252,6 +252,32 @@ pub fn[R : MarkedEventReceiver] Parser::load(
   recv : R,
   multi : Bool,
 ) -> Unit raise YamlError {
+  self.load_with(
+    (event, mark) => MarkedEventReceiver::on_event(recv, event, mark),
+    multi,
+  )
+}
+
+///|
+/// Load YAML events with a callback that may raise `YamlError`.
+///
+/// Events, source markers, and `multi` have the same meaning as in `Parser::load`.
+/// A callback error stops the current load immediately: the same error is
+/// propagated and no further callbacks are made. Collection-start callbacks run
+/// before the parser descends into the collection, so callers can reject excess
+/// nesting before further recursive loading.
+///
+/// This method does not impose application-specific depth or node limits. The
+/// callback is responsible for enforcing them. After an error, discard this
+/// parser; resuming an interrupted document is not supported.
+///
+/// # Errors
+/// Raises syntax errors from the parser or errors raised by the callback.
+pub fn Parser::load_with(
+  self : Parser,
+  on_event : (Event, Marker) -> Unit raise YamlError,
+  multi : Bool,
+) -> Unit raise YamlError {
   if !self.lexer.stream_started() {
     let (ev, mark) = self.next_token()
     if ev != Event::StreamStart {
@@ -260,22 +286,22 @@ pub fn[R : MarkedEventReceiver] Parser::load(
         info="did not find expected <stream-start>",
       )
     }
-    recv.on_event(ev, mark)
+    on_event(ev, mark)
   }
   if self.lexer.stream_ended() {
-    recv.on_event(Event::StreamEnd, self.lexer.get_marker())
+    on_event(Event::StreamEnd, self.lexer.get_marker())
     return
   }
   while true {
     let (ev, mark) = self.next_token()
     if ev == Event::StreamEnd {
-      recv.on_event(ev, mark)
+      on_event(ev, mark)
       return
     }
 
     // clear anchors before a new document
     self.anchors.clear()
-    self.load_document(ev, mark, recv)
+    self.load_document(ev, mark, on_event)
     if !multi {
       break
     }
@@ -283,11 +309,11 @@ pub fn[R : MarkedEventReceiver] Parser::load(
 }
 
 ///|
-fn[R : MarkedEventReceiver] Parser::load_document(
+fn Parser::load_document(
   self : Parser,
   first_ev : Event,
   mark : Marker,
-  recv : R,
+  on_event : (Event, Marker) -> Unit raise YamlError,
 ) -> Unit raise YamlError {
   if first_ev != Event::DocumentStart {
     raise YamlError::YamlError(
@@ -295,32 +321,32 @@ fn[R : MarkedEventReceiver] Parser::load_document(
       info="did not find expected <document-start>",
     )
   }
-  recv.on_event(first_ev, mark)
+  on_event(first_ev, mark)
   let (ev, mark) = self.next_token()
-  self.load_node(ev, mark, recv)
+  self.load_node(ev, mark, on_event)
 
   // DOCUMENT-END is expected.
   let (ev, mark) = self.next_token()
   guard! ev == Event::DocumentEnd
-  recv.on_event(ev, mark)
+  on_event(ev, mark)
 }
 
 ///|
-fn[R : MarkedEventReceiver] Parser::load_node(
+fn Parser::load_node(
   self : Parser,
   first_ev : Event,
   mark : Marker,
-  recv : R,
+  on_event : (Event, Marker) -> Unit raise YamlError,
 ) -> Unit raise YamlError {
   match first_ev {
-    Event::Alias(..) | Event::Scalar(..) => recv.on_event(first_ev, mark)
+    Event::Alias(..) | Event::Scalar(..) => on_event(first_ev, mark)
     Event::SequenceStart(..) => {
-      recv.on_event(first_ev, mark)
-      self.load_sequence(recv)
+      on_event(first_ev, mark)
+      self.load_sequence(on_event)
     }
     Event::MappingStart(..) => {
-      recv.on_event(first_ev, mark)
-      self.load_mapping(recv)
+      on_event(first_ev, mark)
+      self.load_mapping(on_event)
     }
     _ => {
       println("UNREACHABLE EVENT: \{first_ev.to_repr()}")
@@ -330,45 +356,45 @@ fn[R : MarkedEventReceiver] Parser::load_node(
 }
 
 ///|
-fn[R : MarkedEventReceiver] Parser::load_sequence(
+fn Parser::load_sequence(
   self : Parser,
-  recv : R,
+  on_event : (Event, Marker) -> Unit raise YamlError,
 ) -> Unit raise YamlError {
   let (ev, mark) = self.next_token()
   let mut ev = ev
   let mut mark = mark
   while ev != Event::SequenceEnd {
-    self.load_node(ev, mark, recv)
+    self.load_node(ev, mark, on_event)
 
     // next event
     let (next_ev, next_mark) = self.next_token()
     ev = next_ev
     mark = next_mark
   }
-  recv.on_event(ev, mark)
+  on_event(ev, mark)
 }
 
 ///|
-fn[R : MarkedEventReceiver] Parser::load_mapping(
+fn Parser::load_mapping(
   self : Parser,
-  recv : R,
+  on_event : (Event, Marker) -> Unit raise YamlError,
 ) -> Unit raise YamlError {
   let (key_ev, key_mark) = self.next_token()
   let mut key_ev = key_ev
   let mut key_mark = key_mark
   while key_ev != Event::MappingEnd {
     // key
-    self.load_node(key_ev, key_mark, recv)
+    self.load_node(key_ev, key_mark, on_event)
     // value
     let (ev, mark) = self.next_token()
-    self.load_node(ev, mark, recv)
+    self.load_node(ev, mark, on_event)
 
     // next event
     let (ev, mark) = self.next_token()
     key_ev = ev
     key_mark = mark
   }
-  recv.on_event(key_ev, key_mark)
+  on_event(key_ev, key_mark)
 }
 
 ///|
