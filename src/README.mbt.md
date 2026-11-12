@@ -44,6 +44,52 @@ test {
 }
 ```
 
+### Event callbacks that can stop parsing
+
+`Parser::load_with` accepts a callback that may raise `YamlError`. An error from
+the callback stops loading immediately and preserves its marker and message;
+no further events are delivered. This lets a caller enforce a depth or node
+budget before the parser descends further into a collection. Limits are chosen
+and enforced by the caller, rather than imposed by this API.
+
+```mbt check
+///|
+test {
+  let mut depth = 0
+  try
+    @yaml.Parser("- - - 0").load_with(
+      (event, mark) => {
+        match event {
+          SequenceStart(..) | MappingStart(..) => {
+            depth += 1
+            if depth > 2 {
+              raise @yaml.YamlError(mark~, info="nesting exceeds 2 levels")
+            }
+          }
+          SequenceEnd | MappingEnd => depth -= 1
+          _ => ()
+        }
+      },
+      true,
+    )
+  catch {
+    YamlError(mark~, info~) => {
+      assert_eq(info, "nesting exceeds 2 levels")
+      assert_eq(mark.line, 1)
+      assert_eq(mark.col, 4)
+    }
+  } noraise {
+    _ => fail("expected the nesting limit")
+  }
+}
+```
+
+The existing `Parser::load` and receiver traits remain available. Both loading
+methods use the same event stream and `multi` setting: `false` stops after one
+document, while `true` reads through the end of the stream. After a syntax or
+callback error, discard the parser; resuming an interrupted document is not
+supported.
+
 ### js-yaml compatibility: under-indented quoted scalars
 
 By default the parser follows YAML 1.2, which requires the continuation lines
