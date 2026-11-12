@@ -1,5 +1,6 @@
 ///|
 /// YAML data structure representation
+#derive(Eq, Debug)
 pub(all) enum Yaml {
   /// Float types
   Real(Double, repr~ : String)
@@ -23,7 +24,7 @@ pub(all) enum Yaml {
   /// simplifies error handling in the calling code. Invalid type conversion also
   /// returns `BadValue`.
   BadValue
-} derive(Eq, Debug)
+}
 
 ///|
 pub impl ToJson for Yaml with fn to_json(self) {
