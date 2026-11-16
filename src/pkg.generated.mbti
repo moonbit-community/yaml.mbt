@@ -101,9 +101,9 @@ pub fn YamlEmitter::to_string(Self) -> String
 
 // Traits
 pub(open) trait EventReceiver {
-  fn on_event(Self, Event) -> Unit
+  fn on_event(Self, Event) -> Unit raise YamlError
 }
 
 pub(open) trait MarkedEventReceiver {
-  fn on_event(Self, Event, Marker) -> Unit
+  fn on_event(Self, Event, Marker) -> Unit raise YamlError
 }

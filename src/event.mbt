@@ -86,12 +86,12 @@ fn Event::empty_scalar_with_anchor(anchor : Int32, tag : Tag?) -> Event {
 /// ```
 pub(open) trait EventReceiver {
   /// Handler called for each YAML event that is emitted by the parser.
-  fn on_event(Self, event : Event) -> Unit
+  fn on_event(Self, event : Event) -> Unit raise YamlError
 }
 
 ///|
 pub(open) trait MarkedEventReceiver {
-  fn on_event(Self, event : Event, _mark : Marker) -> Unit
+  fn on_event(Self, event : Event, _mark : Marker) -> Unit raise YamlError
 }
 
 ///|
