@@ -393,7 +393,7 @@ test "two space indentations" {
 
 ///|
 test "recursion depth check objects" {
-  let buf = StringBuilder(size_hint=4 * 2 * 10_000)
+  let buf = StringBuilder(capacity=4 * 2 * 10_000)
   for _ in 0..<10_000 {
     buf.write_string("{a:")
   }
@@ -406,7 +406,7 @@ test "recursion depth check objects" {
 
 ///|
 test "recursion depth check arrays" {
-  let buf = StringBuilder(size_hint=2 * 2 * 10_000)
+  let buf = StringBuilder(capacity=2 * 2 * 10_000)
   for _ in 0..<10_000 {
     buf.write_char('[')
   }
@@ -435,7 +435,7 @@ test "nominal float parse" {
   // - +NAN
   // ```
   // Every single one of these values should be parsed as a string in yaml,
-  let buf = StringBuilder(size_hint=400)
+  let buf = StringBuilder(capacity=400)
   let bases = ["nan", "NAN", "NaN", "inf", "infinity", "Infinity"]
   for base in bases {
     buf.write_string("- +\{base}\n")
@@ -466,7 +466,7 @@ test "testcase from OpenAI OpenAPI" {
 
 ///|
 fn visual_to_raw(yaml : String) -> String {
-  let buf = StringBuilder(size_hint=yaml.length() * 2)
+  let buf = StringBuilder(capacity=yaml.length() * 2)
   let mut pending_end_marker = false
   for ch in yaml.iter() {
     if pending_end_marker {
