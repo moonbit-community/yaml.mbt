@@ -10,9 +10,10 @@ import {
 
 // Errors
 #derive(@debug.Debug)
-pub suberror YamlError {
+pub(all) suberror YamlError {
   YamlError(mark~ : Marker, info~ : String)
 }
+#deprecated
 pub fn YamlError::to_repr(Self) -> @debug.Repr
 
 // Types and methods
