@@ -676,10 +676,10 @@ fn Lexer::scan_plain_scalar(self : Lexer) -> Token raise YamlError {
       info="invalid indentation in flow construct",
     )
   }
-  let buf = StringBuilder(size_hint=32)
-  let leading_break = StringBuilder(size_hint=32)
-  let trailing_breaks = StringBuilder(size_hint=32)
-  let whitespaces = StringBuilder(size_hint=32)
+  let buf = StringBuilder(capacity=32)
+  let leading_break = StringBuilder(capacity=32)
+  let trailing_breaks = StringBuilder(capacity=32)
+  let whitespaces = StringBuilder(capacity=32)
   while true {
     self.lookahead(4)
     if self.next_is_document_indicator() || self.char() == '#' {
@@ -1225,7 +1225,7 @@ fn Lexer::scan_block_scalar(
       info="wrongly indented line in block scalar",
     )
   }
-  let line_buffer = StringBuilder(size_hint=100)
+  let line_buffer = StringBuilder(capacity=100)
   let start_mark = self.get_marker()
   while self.col == indent.val && !self.char().is_z() {
     if indent.val == 0 {

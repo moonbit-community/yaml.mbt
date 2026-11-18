@@ -59,11 +59,11 @@ fn Yaml::from_str(v : String) -> Yaml {
   }
   match v {
     ['0', 'x', .. number] =>
-      Yaml::Integer(@string.parse_int64(number, base=16)) catch {
+      Yaml::Integer(@string.parse_int64(number, radix=16)) catch {
         _ => yaml_from_str(v)
       }
     ['0', 'o', .. number] =>
-      Yaml::Integer(@string.parse_int64(number, base=8)) catch {
+      Yaml::Integer(@string.parse_int64(number, radix=8)) catch {
         _ => yaml_from_str(v)
       }
     ['+', .. number] =>
