@@ -11,6 +11,9 @@ on:
     - cron: "0 3 * * 1"
   workflow_dispatch:
 
+env:
+  MOON_SEPARATE_COMPILATION: "1"
+
 jobs:
   check:
     strategy:    
